@@ -1,8 +1,12 @@
 # Modern C++ guides
 
-These guides describe the C++ style used by this repository: how to shape
-components, test behavior, and investigate failures without losing the domain
-model in incidental mechanics. They target engineers working on modern C++
+This repository hosts reusable C++ guidelines for modern C++ codebases. It is
+meant to be added to a project, often as a submodule, and wrapped by
+repo-specific documentation that maps the generic placeholders here to that
+project's namespaces, helpers, layout, tooling, and domain examples.
+
+The guides describe how to shape components, test behavior, and investigate
+failures without burying the domain model in incidental mechanics. They target
 systems where ownership boundaries, error paths, threading, and testability
 matter more than isolated language tricks.
 
@@ -18,6 +22,22 @@ guides reuse its vocabulary.
 | [`cpp-design-principles/`](cpp-design-principles/) | Architecture, types, error handling, performance. |
 | [`cpp-testing-principles/`](cpp-testing-principles/) | Test intent, Catch2 conventions, error-path coverage. |
 | [`cpp-debugging-principles/`](cpp-debugging-principles/) | Root-cause investigation and structural prevention. |
+
+## Consuming repo layer
+
+A consuming repository should keep these guides generic and add a local mapping
+layer next to its own docs. That layer should answer practical questions such
+as:
+
+- Which project namespace replaces `lib::`?
+- Which headers define result types, strong types, scope guards, logging, time,
+  callback wrappers, and test helpers?
+- Where do components, adapters, runtime code, and tests live?
+- Which local examples show the generic design, testing, and debugging rules in
+  real code?
+
+Use [`repo-specific-cpp-guidelines-agent-context.md`](repo-specific-cpp-guidelines-agent-context.md)
+as the handoff file for an agent creating that layer in a new C++ repository.
 
 ## Conventions
 
