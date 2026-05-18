@@ -135,10 +135,10 @@ the SBO budget.
 | `lib::inplace_function`  | yes          | never              | callbacks in tight-budget paths        |
 | template parameter       | yes          | no                 | hot loops, header-only generic code    |
 
-Default to `std::function_ref` (C++26; widely available as
-`tl::function_ref`) for callback *parameters*: it borrows, never
-allocates, accepts any callable. Reach for `std::function` only when
-the wrapper outlives the call site.
+Default to `std::function_ref` for callback *parameters*: it borrows,
+never allocates, accepts any callable. Reach for `std::function` only
+when the wrapper outlives the call site. For C++23 and C++20, use the
+header-only `tl::function_ref` as a drop-in substitute.
 
 ```cpp
 // GOOD - the parameter is a borrowed callable; no allocation, no ownership

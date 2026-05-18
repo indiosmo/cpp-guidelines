@@ -124,8 +124,9 @@ auto router::lookup(std::string_view key)
 }
 ```
 
-C++23 ships `<stacktrace>` in the standard library; `cpptrace` is a
-header-only alternative that works on earlier standards.
+For C++20, use header-only `cpptrace` or `boost::stacktrace` instead of
+`std::stacktrace`; both provide the same `generate_trace().to_string()`
+shape.
 
 The trace pinpoints the path that reached the failure -- which test, which
 caller, which branch. From there, walking up is mechanical.

@@ -62,9 +62,8 @@ stats compute(std::span<const double> xs) {
 Each helper is independently testable and takes a `std::span` so callers
 can pass any contiguous range. The assembler reads as the recipe it is.
 
-`std::ranges::fold_left` is C++23. In C++20, `std::accumulate` over the
-iterator pair is the equivalent (`std::accumulate(xs.begin(), xs.end(),
-0.0)`).
+For C++20, use `std::accumulate(xs.begin(), xs.end(), 0.0)` instead of
+`std::ranges::fold_left`.
 
 **Widget render = paint + flush.** Layout decision, paint, and commit are
 three different concerns; naming each makes the side-effect visible at
@@ -505,18 +504,17 @@ handed to an API that wants a container, convert with `std::ranges::to` at
 the seam.
 
 ```cpp
-// GOOD - C++23: one expression composes and materializes
+// GOOD - one expression composes and materializes
 auto active_ids = users
                 | std::views::filter(is_active)
                 | std::views::transform(&user::id)
                 | std::ranges::to<std::vector>();
 ```
 
-`std::ranges::to` is C++23. In C++20 the equivalent is constructing the
-container from the view's iterators (or `begin/end`):
+For C++20, construct the container from the view's iterators instead of
+piping into `std::ranges::to`:
 
 ```cpp
-// C++20 equivalent
 auto active_view = users
                  | std::views::filter(is_active)
                  | std::views::transform(&user::id);

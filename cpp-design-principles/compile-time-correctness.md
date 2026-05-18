@@ -281,11 +281,11 @@ types. Three reasons:
    field; renaming a field errors at every initializer that still uses the old
    name. Both are much easier to find than a silently shifted positional
    argument.
-3. **Swap-resistant.** C++20 requires designators to appear in declaration
-   order, so two adjacent fields of compatible types -- the easiest swap
-   mistake to make positionally -- cannot be silently transposed. Out-of-order
-   designators fail to compile rather than producing a working program with
-   the wrong meaning.
+3. **Swap-resistant.** Designators must appear in declaration order, so
+   two adjacent fields of compatible types -- the easiest swap mistake to
+   make positionally -- cannot be silently transposed. Out-of-order
+   designators fail to compile rather than producing a working program
+   with the wrong meaning.
 
 ```cpp
 // BAD - positional; what do true and 1024 mean here?

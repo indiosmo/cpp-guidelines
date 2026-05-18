@@ -6,14 +6,25 @@ themes and conventions; this guide applies them to design.
 
 ## C++ standard
 
-The guide assumes C++20. A few examples reach into C++23; the table below lists drop-in C++20 alternatives.
+The guide assumes C++26. The table below lists fallbacks for the
+features used in examples; a blank cell means the feature is already
+available in that standard. Rows that read "no clean fallback" call out
+patterns that simply do not translate.
 
-| C++23 feature             | C++20 alternative                                |
-|---------------------------|--------------------------------------------------|
-| `std::expected<T, E>`     | project backport or `tl::expected<T, E>`         |
-| `std::unreachable()`      | compiler intrinsic such as `__builtin_unreachable()` |
-| `std::ranges::fold_left`  | `std::accumulate` (works on iterator pairs)      |
-| `std::ranges::to<C>()`    | construct `C` from the view's `begin()`/`end()`  |
+| Feature                                      | C++23 fallback                                       | C++20 fallback                                                  |
+|----------------------------------------------|------------------------------------------------------|-----------------------------------------------------------------|
+| `std::expected<T, E>`                        |                                                      | project backport or `tl::expected<T, E>`                        |
+| `std::unreachable()`                         |                                                      | compiler intrinsic such as `__builtin_unreachable()`            |
+| `std::ranges::fold_left`                     |                                                      | `std::accumulate` over `begin()`/`end()`                        |
+| `std::ranges::to<C>()`                       |                                                      | construct `C` from the view's `begin()`/`end()`                 |
+| `std::stacktrace`                            |                                                      | header-only `cpptrace` or `boost::stacktrace`                   |
+| `std::print` / `std::println`                |                                                      | `fmt::print` / `std::format` + `std::fputs`                     |
+| `std::function_ref<R(Args...)>`              | header-only `tl::function_ref`                       | header-only `tl::function_ref`                                  |
+| Contracts (`pre`, `post`, `contract_assert`) | `MY_ASSERT` / explicit `if`-and-return at entry/exit | `MY_ASSERT` / explicit `if`-and-return at entry/exit            |
+| `std::start_lifetime_as<T>`                  |                                                      | `std::memcpy` into a `T` instance; no clean in-place fallback   |
+| `std::generator<T>`                          |                                                      | hand-rolled coroutine traits or `cppcoro::generator`            |
+| `std::mdspan`                                |                                                      | `Kokkos::mdspan` reference implementation                       |
+| `std::flat_map` / `std::flat_set`            |                                                      | `boost::container::flat_map` / `flat_set`                       |
 
 ## The `lib::` namespace
 
@@ -37,7 +48,7 @@ suite. This guide uses two design-specific helpers often:
 | `compile-time-correctness.md`     | Strong typing, the per-domain `types` namespace, parse-don't-validate, plain-aggregate data structs, exhaustiveness checking, designated initializers. |
 | `declarative-style.md`            | Decompose, work on simpler types, stage variables upfront, named predicates, ranges, lazy composition.  |
 | `functional-programming.md`       | Pure functions and value semantics, sum-type matching with `lib::match`, higher-order functions, type-erased callables, capture lifetimes. |
-| `templates.md`                    | C++20 concepts for template constraints; inline `requires` for compile-time dispatch on capability.     |
+| `templates.md`                    | Concepts for template constraints; inline `requires` for compile-time dispatch on capability.           |
 | `error-handling.md`               | Result types, per-domain error codes, exceptions at boundaries, diagnostic context.                     |
 | `invariants.md`                   | Exception safety, transactions, rollback with scope guards, idempotency for retried operations.         |
 | `state-machines.md`               | When to model logic as an FSM, Boost.SML with embedded PlantUML, isolated transition tests.             |

@@ -6,7 +6,7 @@ spelled, and which assertion macros to use.
 ## Snippet conventions
 
 Examples assume Catch2 v3. Use angle-bracket includes, `snake_case` test
-names, lowercase bracketed tags, and C++20 designated initializers with
+names, lowercase bracketed tags, and designated initializers with
 `.field = value`.
 
 ## Test discovery and selection

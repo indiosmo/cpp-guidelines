@@ -41,9 +41,13 @@ as the handoff file for an agent creating that layer in a new C++ repository.
 
 ## Conventions
 
-Examples use C++20 unless a section says otherwise. Code fences use `cpp` for
-C++ snippets, examples use `snake_case` identifiers, and prose uses US English.
-Catch2 includes use angle brackets.
+Examples use C++26 unless a section says otherwise; the relevant guide
+notes drop-in alternatives for C++20 and C++23, and flags the few
+features (for example `std::start_lifetime_as`) that have no clean
+older-standard equivalent.
+
+Code fences use `cpp` for C++ snippets, examples use `snake_case`
+identifiers, and prose uses US English. Catch2 includes use angle brackets.
 
 Throughout these guides, `lib::` is a placeholder namespace for small in-house
 utilities. Substitute the namespace your codebase uses. The examples rely on a

@@ -266,9 +266,9 @@ these depend on world state, not on the shape of the value, so they
 live as runtime checks at Layers 2 and 3. Relational invariants
 across several values -- "these three points are non-collinear", "the
 sum of allocations does not exceed the budget" -- fall in the same
-bucket. C++26 contracts (`pre`, `post`, `contract_assert`) give these
-checks a uniform shape; until then, plain returns and assertions
-cover the same ground.
+bucket. Contracts (`pre`, `post`, `contract_assert`) give these checks a
+uniform shape on entry and exit. For C++23 and C++20, use `MY_ASSERT`
+and explicit `if`-and-return at the function boundary instead.
 
 ## See also
 
