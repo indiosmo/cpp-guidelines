@@ -53,7 +53,7 @@ vocabulary to travel through.
 
 Components have clearly defined domains, and they do not depend on things
 outside their domain. Cross-domain communication happens through dedicated
-adapter modules whose only job is to translate between two neighboring
+adapter modules whose purpose is to translate between two neighboring
 domains.
 
 A pure domain stays testable in isolation, because
@@ -235,8 +235,8 @@ component/runtime/     Runtime: thread composition, I/O, timers
 The runtime layer depends on the functional layer, never the other way
 around. The functional layer takes its inputs by reference or value,
 returns results synchronously, and is exercised in tests by feeding it
-crafted inputs and inspecting the outputs. The runtime layer's job is to
-call those functions on the right thread at the right time, and to bridge
+crafted inputs and inspecting the outputs. The runtime layer calls those
+functions on the right thread at the right time, and bridges
 their results to the sockets, files, and timers the operating system
 provides.
 

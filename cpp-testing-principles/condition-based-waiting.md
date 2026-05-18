@@ -44,7 +44,7 @@ void wait_for(Predicate condition,
 
 The timeout prevents the test from hanging forever if the condition never
 becomes true -- a missing timeout is one of the most common ways for
-"flaky" to become "the CI job is stuck".
+"flaky" to become "the CI run is stuck".
 
 Replacing an arbitrary sleep with a wait is a local transformation:
 

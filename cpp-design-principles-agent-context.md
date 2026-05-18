@@ -3,8 +3,7 @@
 Use this file as compact, always-loaded context for agents working in modern
 C++ codebases. It distills the full `cpp-design-principles/` guide into the
 rules most likely to change code shape. The examples use `lib::` placeholders;
-map them to the local project vocabulary first (`kraken::`, `mil::`, or
-another in-house namespace).
+map them to the local project vocabulary first.
 
 Before writing code, search for the local abstraction that already expresses
 the idea. Prefer project helpers over new utilities unless the same missing
@@ -135,10 +134,10 @@ Use a named conversion helper when the mapping is semantic, lossy, fallible, or
 shape-changing: enum to wire integer, enum to string, string to parsed enum, a
 larger fixed string into a smaller one, or any conversion that can reject.
 
-Assessment-style manifestation: `order_routing` owns inbound requests,
-`market_data` owns outbound messages, and `matching_engine` is the composition
-point. Abacus-style manifestation: `aor`, `aorfix`, and vendor wrappers stay
-separate; adapter domains such as `aorfix_onixs_fix` and `aor_fwll` translate.
+Example manifestation: `order_routing` owns inbound requests, `market_data`
+owns outbound messages, and `matching_engine` is the composition point. Another
+manifestation: core domains and vendor wrappers stay separate; adapter domains
+translate between them.
 
 ## Forward Dependencies
 

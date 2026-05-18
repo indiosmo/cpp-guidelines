@@ -48,7 +48,7 @@ auto router::lookup(std::string_view key)
 }
 ```
 
-The function is doing its job: it rejects an empty key. The interesting
+The function behaves correctly: it rejects an empty key. The interesting
 question is who passed it the empty key.
 
 ### 3. Walk one level up
