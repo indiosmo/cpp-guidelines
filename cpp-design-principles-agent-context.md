@@ -52,6 +52,23 @@ with values, capture emitted callbacks, and avoid threads, sockets, event
 loops, vendor SDKs, and runtime wiring unless the behavior under test is
 integration behavior.
 
+## Debugging Discipline
+
+Do not patch symptoms. Reproduce the failure, read the whole error or trace,
+and trace the bad value, state transition, or missing check back to where it
+originated. If a fix attempt fails, treat that as new evidence and return to
+investigation instead of stacking another guess on top.
+
+Form one explicit hypothesis at a time and test it with the smallest useful
+experiment. Compare the broken path against a nearby working path before
+inventing a new pattern; the difference is usually where the bug lives.
+
+Once the root cause is understood, write the regression test that fails for
+that cause and passes for the intended behavior. Then fix the source of the
+bug, not only the frame where it surfaced. Afterward, ask what type, parser,
+boundary validation, assertion, rollback guard, or error path would make the
+bug class harder to reintroduce.
+
 ## Domain Ownership
 
 Each domain owns its types, messages, errors, and invariants. Sibling domains

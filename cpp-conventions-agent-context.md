@@ -81,6 +81,43 @@ for narrow internal hygiene or branch setup that the public API should not
 expose. For tests, sandboxes, and spikes, wire explicit noop callbacks for
 irrelevant outputs; production wiring must assign real callbacks.
 
+## Debugging
+
+Before fixing a failing test or bug, identify the root cause. Capture the
+exact failure, read the complete message or stack trace, reproduce it with the
+smallest command or scenario, and trace the bad value or state backward to the
+first component that produced it.
+
+Good debugging loop:
+
+```text
+observe the symptom -> trace the source -> state one hypothesis
+-> run one focused experiment -> write the failing regression test
+-> fix the root cause -> run the relevant test and suite
+```
+
+Bad debugging loop:
+
+```text
+change code -> rerun test -> change more code -> rerun test
+```
+
+When the failure is deep in a call chain, add temporary logging before the
+suspect call so the log captures the inputs that caused the failure. For
+threaded or callback-heavy paths, capture enough context to identify the
+request, branch, or test case that reached the bad state.
+
+Use assertions for programmer invariants that should be impossible in correct
+code. Return structured errors for invalid input or caller-visible failure
+conditions. If a bug fix adds a runtime check, decide whether the stronger fix
+is a refined type, parse-at-boundary conversion, boundary validation, rollback
+guard, or explicit error path.
+
+For flaky tests, suspect timing and leaked state first. Replace sleeps with
+predicate waits, and wrap global providers, singleton alternatives, clocks,
+environment variables, and other process-wide state in RAII guards so each
+test restores the previous state even after a `REQUIRE` failure.
+
 ## Domain Types
 
 Put a `types.hpp` in every domain from the start. Define domain types inside a
