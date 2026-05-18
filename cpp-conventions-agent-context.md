@@ -27,6 +27,43 @@ Functional code lives in the component root. Runtime wrappers live under
 `<component>/runtime/`. Adapters that translate between domains carry both
 domains in the name, for example `aor_fwll` or `aorfix_onixs_fix`.
 
+## Tests
+
+Tests verify intended behavior, not implementation mechanics. Start from the
+domain, protocol, contract, or bug report. Use the implementation to understand
+the code path, but do not compute expected values by re-running the same logic
+the test is supposed to check.
+
+Good:
+
+```cpp
+TEST_CASE("rectangle - area", "[geometry]")
+{
+  const auto r = rectangle{.width = 6, .height = 4};
+  CHECK(r.area() == 24);
+}
+```
+
+Bad:
+
+```cpp
+TEST_CASE("rectangle - area", "[geometry]")
+{
+  const auto r = rectangle{.width = 6, .height = 4};
+  CHECK(r.area() == r.width * r.height); // tautological
+}
+```
+
+For bug fixes, add or tighten a test that fails before the fix. Confirm the
+red state, then change production code until the test passes. For new
+behavior, prefer writing the behavior test first so the contract shapes the
+implementation.
+
+Keep test bodies dense with useful signal. Name the scenario, set up only the
+data that matters, and assert outcomes a real defect would violate. Avoid
+large suites of low-value cases that restate constructors, getters, or the
+current algorithm without establishing intent.
+
 ## Domain Types
 
 Put a `types.hpp` in every domain from the start. Define domain types inside a

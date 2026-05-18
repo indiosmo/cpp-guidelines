@@ -24,6 +24,23 @@ types, dependency graph, and tests. When adding behavior, ask:
 If the answer is unclear, do a small local refactor that makes ownership,
 inputs, outputs, and failure modes visible in the signatures.
 
+## Testing Intent
+
+Tests are part of the design feedback loop. A test should encode an
+independent statement of intended behavior, derived from the domain, contract,
+or relevant specification. Do not derive the expected value from the
+implementation under test; that only proves the code does what the code does.
+
+When fixing a bug, first write or tighten a test that fails for the observed
+bug and passes for the intended behavior. Then change the production code until
+the test passes. When adding behavior, write the test first when practical so
+the expected contract guides the implementation instead of echoing it.
+
+Keep tests high in information density. Each case should name a meaningful
+scenario, isolate the behavior being specified, and assert outcomes that would
+fail for plausible bugs. Prefer a small set of contract-rich cases over a large
+suite of mechanical cases that nobody can read or trust.
+
 ## Domain Ownership
 
 Each domain owns its types, messages, errors, and invariants. Sibling domains
