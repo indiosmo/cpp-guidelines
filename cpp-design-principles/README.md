@@ -44,4 +44,5 @@ suite. This guide uses two design-specific helpers often:
 | `pipelines.md`                    | Components as pipeline stages with `on_*` callback fields; wiring near `main` as a combinator (threading, tee, filter, deferred re-entrance); external SDK wrappers as event sources. |
 | `runtime.md`                      | Threading as an edge effect: single-threaded component internals, posting work between threads via event-loop queues, lock-free primitives for small shared state. |
 | `cross-cutting.md`                | Variant-based injectable globals (clock, logger, timer) with free-function dispatch via `lib::match`.   |
+| `comments.md`                     | Guiding comments for non-obvious lines and blocks; comments as present-tense intent rather than history. |
 | `performance.md`                  | Performance philosophy (clarity first, measure don't guess), hot-path allocations, flat vs node hash maps, type-erased callables. |

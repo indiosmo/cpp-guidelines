@@ -377,8 +377,10 @@ for (auto const& order : orders) { /* ... */ }
 ## Comments
 
 Use `/* ... */` for class, struct, header, and larger API documentation. Use
-`//` for inline notes inside function bodies. Comment present intent and
-non-obvious ordering; do not narrate obvious code or describe old behavior.
+`//` for guiding comments inside function bodies. Comment present intent,
+non-obvious behavior, and non-obvious ordering. Do not narrate obvious code,
+describe old behavior, keep a trail of past decisions, record a migration
+trail, or list what another layer handles.
 
 Good class/header comment:
 
@@ -406,6 +408,12 @@ on_event(order_ack{
   .user{request.user},
   .order_id{request.order_id},
 });
+
+// Rest the residual: pool-allocate a node, link it into the book,
+// register its identity for future cancels and duplicate checks.
+order_node* node = allocate_node(order);
+book.place(node);
+resting_index_.emplace(incoming_key, node);
 ```
 
 Bad comments:
@@ -415,10 +423,32 @@ Bad comments:
 lib::match(cmd, [this](const auto& cmd) { handle(cmd); });
 
 // Old implementation used a vector here.
+
+// Dedup moved to the upstream stage.
+
+// Increment the counter.
+++counter;
 ```
 
-Lean toward comments that summarize a dense block. Skip comments for a short,
-self-describing one-liner.
+Lean toward comments that summarize a block, even when the syntax is not
+complex. A single sentence is faster to read than a loop, branch, or lambda
+body. Consecutive block comments should read like the function's table of
+contents.
+
+Strongly comment non-obvious single lines: dense punctuation, designated
+initializers across domains, chained calls, iterator invalidation, lifetime
+contracts, performance-sensitive ordering, and protocol rules. Skip comments
+for short, self-describing one-liners and repeatable local idioms. In
+particular, a plain `lib::match` / `mil::match` dispatcher is usually
+self-evident even if the syntax looks busy; comment the non-obvious choice
+inside the visitor, not the fact that variant dispatch is happening.
+
+If a precondition matters, phrase it as the invariant the code relies on:
+
+```cpp
+// precondition: session mutex is held; next_seq is read and incremented without locking here.
+auto next = session_.next_seq++;
+```
 
 ## Error Types
 

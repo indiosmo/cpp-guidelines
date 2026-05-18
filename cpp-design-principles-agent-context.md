@@ -420,6 +420,45 @@ For three or more sequential fallible steps, prefer named
 `lib::result`-returning helpers composed with `BOOST_LEAF_ASSIGN` /
 `BOOST_LEAF_CHECK` over a long inline `if (!ok) { log; return; }` cascade.
 
+## Guiding Comments
+
+Use comments as local statements of intent. For non-obvious lines or blocks,
+write a short English sentence before the code so the reader can skim the
+function's flow before parsing C++ syntax. Good comments also give reviewers a
+claim to compare against the implementation.
+
+Comment lines with dense syntax, domain conversions, lifetime or iterator
+constraints, ordering requirements, chained calls, or behavior not apparent
+from names. Lean toward commenting blocks even when syntax is simple: a loop,
+conditional, lambda body, or related group of statements is faster to read when
+preceded by one sentence naming the step.
+
+Good:
+
+```cpp
+// reject duplicates and resolve the destination book up front.
+BOOST_LEAF_CHECK(check_duplicate(incoming_key));
+BOOST_LEAF_ASSIGN(auto* book_ptr, find_book(request.instrument));
+auto& book = *book_ptr;
+
+// ack precedes trades so receivers see the order id before fills on it.
+on_event(order_ack{.user = user, .order_id = order_id});
+```
+
+Do not comment repeatable local idioms just because they have syntax noise. A
+plain `lib::match` / `mil::match` dispatcher is a convention and usually needs
+no comment:
+
+```cpp
+lib::match(cmd, [this](const auto& typed) { handle(typed); });
+```
+
+Do not narrate obvious code, keep a trail of past decisions in comments, or
+list what the code does not do. Comments describe the present code and the
+present reason for its shape. Git history records prior designs; ADRs hold
+enduring decision rationale. If a precondition matters, state it as a
+present-tense invariant the code relies on.
+
 ## Variants, Concepts, And Templates
 
 Use `lib::match` for domain decisions over `std::variant`; missing alternatives
