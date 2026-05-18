@@ -59,10 +59,27 @@ red state, then change production code until the test passes. For new
 behavior, prefer writing the behavior test first so the contract shapes the
 implementation.
 
+When an expectation is non-obvious, name its source in the test comment or row
+label: a protocol rule, public spec, fixture, black-box scenario, or bug
+report. If the contract is type-level, test it at compile time with
+`static_assert` / `STATIC_REQUIRE` instead of adding runtime scaffolding.
+
 Keep test bodies dense with useful signal. Name the scenario, set up only the
 data that matters, and assert outcomes a real defect would violate. Avoid
 large suites of low-value cases that restate constructors, getters, or the
 current algorithm without establishing intent.
+
+Component tests should drive the functional surface directly. Construct domain
+values, call the public function or stage entry point, and capture observable
+outputs through callbacks or returned values. Do not spin runtime threads,
+sockets, event loops, or SDK fixtures unless the test is explicitly about that
+integration boundary.
+
+Use factories, presets, and probes to keep setup out of the behavioral story.
+Factories should let a test override only the fields that matter. Probes are
+for narrow internal hygiene or branch setup that the public API should not
+expose. For tests, sandboxes, and spikes, wire explicit noop callbacks for
+irrelevant outputs; production wiring must assign real callbacks.
 
 ## Domain Types
 

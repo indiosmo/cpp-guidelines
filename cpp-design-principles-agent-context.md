@@ -41,6 +41,17 @@ scenario, isolate the behavior being specified, and assert outcomes that would
 fail for plausible bugs. Prefer a small set of contract-rich cases over a large
 suite of mechanical cases that nobody can read or trust.
 
+Use the right source for the expectation. Protocol and workflow tests should
+cite the spec, fixture, or bug report that defines the observable behavior.
+Type-level contracts belong in compile-time tests (`static_assert`,
+`STATIC_REQUIRE`, concept checks) so unsupported constructions and missing
+variant arms fail during compilation.
+
+Keep component tests on the functional core. Drive the public domain surface
+with values, capture emitted callbacks, and avoid threads, sockets, event
+loops, vendor SDKs, and runtime wiring unless the behavior under test is
+integration behavior.
+
 ## Domain Ownership
 
 Each domain owns its types, messages, errors, and invariants. Sibling domains

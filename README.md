@@ -52,6 +52,10 @@ A handful of ideas recur across the three guides:
 - **Push effects to the edge.** The functional core stays free of I/O, threads,
   and timers. The imperative shell composes the pure pieces with the
   surrounding side effects. Inner layers therefore test with plain values.
+- **Tests encode intent.** Expected values come from the domain, specification,
+  contract, or bug report, not from re-running the implementation. A useful
+  test fails for a plausible defect and stays readable enough to serve as a
+  behavioral example.
 - **Compile-time checks where possible, runtime checks where not.**
   Strong types, exhaustive switches, and designated initializers push
   validation into the compiler. Properties the type system cannot express,
