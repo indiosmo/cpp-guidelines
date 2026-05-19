@@ -1,10 +1,10 @@
 # C++ Design Principles -- Examples
 
-Good/bad code pairs that illustrate the rules in
-[`cpp-design-principles-agent-context.md`](cpp-design-principles-agent-context.md).
-Load this file on demand when the prose alone is not enough to guide a
-concrete shape. Examples use `lib::` placeholders -- substitute the local
-project vocabulary.
+Good/bad code pairs that illustrate the design rules in
+[`cpp-agent-context.md`](cpp-agent-context.md). Load this file on
+demand when the prose alone is not enough to guide a concrete shape.
+Examples use `lib::` placeholders -- substitute the local project
+vocabulary.
 
 ## Domain Ownership
 

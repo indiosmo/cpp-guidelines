@@ -1,10 +1,10 @@
 # C++ Conventions -- Examples
 
-Good/bad code pairs that illustrate the rules in
-[`cpp-conventions-agent-context.md`](cpp-conventions-agent-context.md).
-Load this file on demand when the rule alone is not enough to shape an
-edit. Sections match the rules file. Examples use `lib::` placeholders --
-substitute the local project vocabulary.
+Good/bad code pairs that illustrate the convention rules in
+[`cpp-agent-context.md`](cpp-agent-context.md). Load this file on
+demand when the rule alone is not enough to shape an edit. Section
+titles match the rule sections in the agent context. Examples use
+`lib::` placeholders -- substitute the local project vocabulary.
 
 ## Tests
 
