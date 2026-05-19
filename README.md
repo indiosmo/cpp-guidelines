@@ -45,17 +45,14 @@ consuming repository, then invoke it from there.
 ## Agent context
 
 The [`agent/`](agent/) folder collects the always-loaded agent
-essentials ([`cpp-agent-essentials.md`](agent/cpp-agent-essentials.md)
--- the high-leverage cheat sheet that shapes the code an agent would
-otherwise write), the on-demand fuller reference
-([`cpp-agent-context.md`](agent/cpp-agent-context.md) -- the same
-topics in more depth plus the demoted style, FSM, and alias
-material), the on-demand example companions
-([`cpp-design-principles-examples.md`](agent/cpp-design-principles-examples.md)
-and [`cpp-conventions-examples.md`](agent/cpp-conventions-examples.md)),
-and the `repo-specific-cpp-guidelines` skill. Consumers import the
-essentials file unconditionally and load the context and examples
-files on demand. Humans should read the topical guides above instead.
+reference ([`cpp-agent-context.md`](agent/cpp-agent-context.md) -- the
+rules that shape the code an agent would otherwise write), the
+on-demand example companion
+([`cpp-agent-examples.md`](agent/cpp-agent-examples.md) -- good/bad
+code pairs keyed to the context sections), and the
+`repo-specific-cpp-guidelines` skill. Consumers import the context
+file unconditionally and load the examples file on demand. Humans
+should read the topical guides above instead.
 
 ## Conventions
 

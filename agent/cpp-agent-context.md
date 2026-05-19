@@ -1,20 +1,13 @@
 # C++ Agent Context
 
-On-demand reference companion to
-[`cpp-agent-essentials.md`](cpp-agent-essentials.md). The essentials
-file carries the high-leverage rules that shape code an agent would
-otherwise write; this file holds the fuller treatment plus topics
-demoted from the always-loaded path -- layout, strong-type
-ergonomics, designated-initializer style, namespace alias and const
-placement, error-handler ordering, exhaustiveness defaults, FSM
-vocabulary, declarative style, cross-cutting services, and
-forward-dependency framing. Load this file when an edit needs more
-than the essentials, when a rule there feels under-specified, or when
-the change touches one of the demoted topics. Concrete good/bad code
-pairs live in
-[`cpp-design-principles-examples.md`](cpp-design-principles-examples.md)
-and [`cpp-conventions-examples.md`](cpp-conventions-examples.md);
-load them when shaping a specific edit or reviewing a concrete shape.
+Always-loaded reference for agents working in modern C++ codebases.
+Carries the rules that shape code an agent would otherwise write --
+domain ownership, strong types, error handling, threading,
+declarative style, FSM and variant vocabulary, layout, namespace and
+const placement, performance discipline, tests, debugging, and
+comments. Concrete good/bad code pairs live in
+[`cpp-agent-examples.md`](cpp-agent-examples.md); load it on demand
+when shaping a specific edit or reviewing a concrete shape.
 
 Examples use `lib::` placeholders -- map them to the local project
 vocabulary first. Common placeholders: `lib::result<T>` for the
