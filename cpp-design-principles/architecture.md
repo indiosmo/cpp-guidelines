@@ -5,38 +5,37 @@ fall, which way dependency arrows point, and where side effects live.
 
 ## Theory of the domain
 
-Source code is the precipitate of a theory the team holds about the domain;
-keeping the code malleable is how that theory keeps refining itself. Naur's
-1985 essay frames a program as a theory living in the heads of the developers
-who built it. The theory covers the mapping from world affairs to program
-text, the justifications for the chosen structure, and the judgment about
-which proposed extensions fit and which strain the design. The source files
-are an artifact of that theory; they do not contain it.
+A program is a theory the team holds about the domain, and the source files
+are an artifact of that theory, not the theory itself. Naur's 1985 essay
+frames a program this way: the theory lives in the heads of the developers
+who built the system. It covers how the world maps onto program text, why
+the structure is what it is, and which proposed extensions fit the design
+or strain it. Keeping the code malleable is how the team keeps refining
+the theory.
 
-Domain context saturates the code. A `client_order_id` is not a string; it is
-a string carrying a specific lifecycle, ownership, and uniqueness contract
-the team agreed on, and that contract is what makes the surrounding code make
-sense. Strong types, explicit signatures, parse-don't-validate at the
-boundary, scope-guarded rollback -- the rules in the rest of this guide --
-exist to keep the code legible to the theory and pliable as the theory
-sharpens. Production use is where the theory meets reality, and the code has
-to bend to absorb what the team learns. A rigid codebase forces the theory
-to fossilize around yesterday's understanding; a malleable one lets each
-sharpening of the theory land as a refactor rather than a workaround. This
-is Brooks' essential complexity surfacing in the medium Reeves identified:
+Domain context lives in the code. A `client_order_id` is not a string; it
+is a string carrying a specific lifecycle, ownership, and uniqueness
+contract the team agreed on, and that contract is what makes the
+surrounding code make sense. Strong types, explicit signatures,
+parse-don't-validate at the boundary, scope-guarded rollback -- the rules
+in the rest of this guide -- exist to keep the code legible to the theory
+and easy to change as the theory improves. Production teaches the team
+what the theory missed, and the code has to absorb those lessons. A rigid
+codebase locks the theory to yesterday's understanding; a malleable one
+lets each refinement arrive as a refactor rather than a workaround. This
+is Brooks' essential complexity expressed in the medium Reeves identified:
 the source is the design, and the design is where the domain theory lives.
 
-Documentation cannot transmit the full theory -- some of it is tacit, held in
-the reflexes of the people who shipped the system -- but it is the most
-durable channel for the why that code alone cannot show. Treat this as a
-working lens, not a closed proof. Original authors are not automatically the
-best theorists of the current system; theory can decay into folklore that
-nobody can justify; and Naur's framing is sometimes invoked to excuse thin
-documentation, which only accelerates the decay. Domain-Driven Design's
-ubiquitous language is the practical mechanism that keeps the theory legible
-in the code: the words on the whiteboard, in the tickets, in the types, and
-in the tests are the same words, so a change in understanding has a single
-vocabulary to travel through.
+Documentation cannot transmit the full theory -- some of it is tacit, held
+by the people who shipped the system -- but it is the most durable record
+of the why that code alone cannot show. Treat this as a useful frame, not
+a final word. Original authors are not automatically the best theorists of
+the current system; theory can decay into folklore nobody can justify; and
+Naur's framing is sometimes invoked to excuse thin documentation, which
+makes the decay worse. Domain-Driven Design's ubiquitous language keeps
+the theory legible in the code: the whiteboard, the tickets, the types,
+and the tests use the same words, so a change in understanding travels
+through a single vocabulary.
 
 ### References
 
@@ -271,7 +270,7 @@ up, applied to the whole component.
 A useful check on the design above is what a unit test needs to exercise a
 piece of it. If the test can hand the code plain values and inspect plain
 return values, effects have been pushed out, dependencies are explicit, and
-the domain is not silently reaching at anything outside itself. If the test
+the domain is not silently reaching for anything outside itself. If the test
 instead needs a mock vendor SDK, a fake thread pool, or a large fixture
 struct just to make the code run, one of the preceding rules has been bent
 -- an effect leaked inward, a dependency arrow points the wrong way, or
