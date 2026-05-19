@@ -143,39 +143,96 @@ enough to deserve a name:
 warning ("non-defaulted callback type X asserts on destruction"), that
 is signal it bites often and belongs in the local guide.
 
-## Writing discipline: the restate-vs-map test
+## Writing discipline: the three-bucket filter
 
-Before keeping a section, paragraph, or example in the local guide,
-ask:
+Every section, paragraph, and bullet in a topical file
+(`design.md`, `testing.md`, `debugging.md`) must fit one of three
+buckets. If a candidate sentence does not fit any bucket, delete it.
 
-> If I replaced the project names with `lib::` placeholders, would this
-> example differ from what the shared guide already says?
+1. **Additions** -- something the project has that the shared guide
+   does not name at all. Examples: a numeric-prefix scheme for error
+   codes plus the validator script that enforces it; a wiring-helper
+   family that bulk-connects callback fields; an adapter recipe of
+   "abstract codec + per-counterparty impl + runtime layer"; a JSON
+   config + PFR-reflection macro pair.
+2. **Deltas** -- something the project does differently from the
+   shared guide's default shape. Examples: the shared guide describes
+   a single `errors.hpp`, but the project splits into a triad
+   (`error_code.hpp + errors.hpp + error_handlers.hpp`); the shared
+   guide names a generic `lib::scope_exit`, but the project uses
+   `ricab/scope_guard` directly with no wrapper.
+3. **Consequences** -- a non-obvious project-specific outcome of
+   following a shared rule. Examples: callback fields are
+   `mil::inplace_function`, which is non-defaulted, so tests must
+   wire every callback or trip a destruction assert; handler order
+   in `std::tuple_cat` matters because `boost::leaf` walks the tuple
+   linearly.
 
-If no, delete it. The shared guide is loaded as agent context;
-restating its content burns the reader's attention budget and creates
-two sources of truth that will drift.
+If a candidate paragraph reads like "the shared guide says X; in
+this project, X looks like Y", it is almost certainly restatement.
+Strip the "shared guide says X" half. The reader has the shared
+guide loaded.
 
-Concrete tells that something fails the restate-vs-map test:
+### Tells of restatement
 
-- A code example that demonstrates a rule the shared guide already
-  demonstrates, with no project-specific helper or recurring `N`
-  choice.
-- A paragraph of prose explaining *why* a pattern is good (the shared
-  guide owns the rationale; the local file is the index, not the
-  textbook).
-- A repeated definition of what `lib::strong_type`, `BOOST_LEAF_CHECK`,
-  or `std::variant` do.
+- A paragraph framing or motivating a rule before stating the
+  project's realisation. ("The shared guide pushes strong typing,
+  exhaustive enum switches, ...") Delete the framing; jump to the
+  project specifics.
+- A code example that demonstrates a shared-guide rule with no
+  project-specific helper, `N` choice, or gotcha.
+- A description of what `lib::strong_type`, `lib::match`,
+  `BOOST_LEAF_CHECK`, or `std::variant` does.
+- A "reserve this pattern for genuine X" sentence (rationale belongs
+  in the shared guide).
+- A sentence that lists what something is *not* responsible for
+  ("this is not a thread-safe component"), unless the boundary is
+  load-bearing and non-obvious from the type.
 
-Tells that something *passes* the test:
+### Worked example
 
-- A line of the form "project symbol X realizes shared concept Y;
-  defined in `path/to/header.hpp`".
-- A pattern the project follows that the shared guide does not name
-  (adapter codec directories, the `wire_noop` recipe, the
-  `error_code.hpp + errors.hpp + error_handlers.hpp` triad).
-- A non-obvious project consequence of following a shared rule (e.g.
-  "non-defaulted callbacks assert on destruction, so tests must wire
-  every callback or use the noop helper").
+A pipelines section that fails the test:
+
+> ## Pipelines and callbacks
+>
+> The shared guide describes pipeline stages as components with
+> `on_*` callback fields and `send` overloads. The canonical
+> realisation lives in `src/aor/aor/pipeline_stage.hpp`. A stage
+> exposes:
+>
+> - one virtual `send(Message&&)` per message type;
+> - one public `mil::inplace_function<void(Message&&)>` callback
+>   field per message type.
+>
+> Wiring near `main` assigns the callbacks. Non-obvious consequence:
+> these callbacks are non-defaulted and assert on destruction in
+> debug builds...
+
+The first three paragraphs restate the shared guide's pipeline
+shape; only the consequence-bullet earns its place. The trimmed
+version reads:
+
+> ## Pipelines and callback wiring
+>
+> Pipeline interfaces follow the shared on_* + send shape. Project
+> additions live in `src/aor/aor/wiring.hpp`: `wire_requests`,
+> `wire_responses`, `wire`, `wire_proxy`.
+>
+> **Non-obvious consequence.** Callback fields are
+> `mil::inplace_function`, which is non-defaulted and asserts on
+> destruction if it was never assigned. `scripts/wirecheck.sh`
+> catches most production omissions; tests must wire noops by hand.
+
+One sentence pointing at the shared shape ("follow the shared on_* +
+send shape"), then the additions and the consequence. Everything
+else is gone.
+
+### Section-length smell
+
+If a topical-file section runs longer than five or six short
+sentences or bullets, suspect restatement. The local guide is an
+index; a section that needs two paragraphs of prose is almost
+always doing the shared guide's job too.
 
 ## Writing discipline: one canonical example per pattern
 
@@ -239,97 +296,141 @@ relationship to the shared submodule. Then:
 5. **Relation to other docs.** Short bullets pointing at `AGENTS.md`,
    `INDEX.md`, the shared submodule, ADRs.
 
-## File shape: design.md
+## Writing procedure: extract bullets first, then prose
 
-Opens with one paragraph naming what the file does and a pointer at
-the README's placeholder table. Then one section per project-specific
-design concept, in this rough order:
+Do not draft prose top to bottom. Each topical file is built in three
+passes:
 
-- Component and domain layout (the project's per-component directory
-  shape, where runtime wrappers live, how adapter modules are named).
-- The `types.hpp` convention (or equivalent vocabulary file) and which
-  strong-type helper / `N` choices recur.
-- Error handling (the file triad if any, numeric prefix scheme,
-  validator script, catch-macro family, `make_error` shortcut
-  signatures).
-- Pipelines and wiring (the project's wiring helper family if any, and
-  the non-obvious consequences of the chosen callback storage type).
-- Runtime layer wrappers (the canonical marshalled-source / sink shape,
-  the message-queue typedef with its capacity tuning).
-- Cross-cutting singletons (the variant-backed globals, how `main`
-  composes them, how tests sandbox them).
-- Adapter pattern (the recurring "abstract interface + per-X impls +
-  runtime layer" recipe, plus any snapshot-type trick).
-- Hot-path helpers (recurring `N` choices, pre-reserved containers,
-  callback storage sizing, project annotations like "do not adopt X
-  -- broken").
-- Navigation file convention (per-module `INDEX.md` and how to refresh
-  it).
+1. **Topic walk.** Go through the shared guide's matching tree
+   (`cpp-design-principles/` for `design.md`, etc.) one file at a
+   time. For each shared file, ask only the three-bucket questions:
+   does the project add anything here, do anything differently, or
+   suffer any non-obvious consequence? Capture each answer as a
+   single bullet with the concrete symbol, path, or script attached.
+   If a shared file yields zero bullets, write nothing for it.
 
-Skip a section if the project genuinely has no instance of it. Add a
-section if the project has a recurring pattern not on this list.
+2. **Group into sections.** Cluster the bullets that share a topic
+   (error handling, pipelines, runtime, ...). Each cluster becomes
+   one section. A cluster with one bullet is a fine section -- write
+   the bullet plus its routing sentence and stop. A topic that
+   produced zero bullets does not appear in the file at all.
 
-## File shape: testing.md
+3. **Prose only as needed.** For each section, write the minimum
+   routing prose to introduce the bullets -- usually one sentence.
+   No framing, no motivation, no rationale. If the routing sentence
+   restates the shared guide, delete it; the bullets are enough.
 
-Same opening shape. One section per project-specific testing concept:
+The order of sections in the final file follows whichever cluster
+the reader is most likely to need first; the topic walk in pass 1 is
+discovery scaffolding, not the output order.
 
-- Test target layout and naming (Catch2, gtest, doctest -- whichever),
-  including how tests mirror `src/`.
-- Result-aware assertion helpers (`MIL_REQUIRE_LEAF`,
-  `mil::testing::require_error`, equivalents).
-- Factory / fixture / probe conventions (where they live, naming).
-- Singleton-sandboxing RAII guards (for tests that touch a
-  variant-backed global).
-- Deterministic clock and time-control helpers (`mock_clock`, etc).
-- Async waiting helpers (predicate-wait functions, timeout helpers).
-- Integration-test boundaries (which directories or tags signal "this
-  spins real threads / sockets / vendor engines"; how to run only the
-  fast tests).
-- Approval-test conventions if present (scrubbers, output directory
-  layout, review-tool invocation).
-- The "ensure all callbacks are wired in tests" recipe, if relevant.
+## What the topical files actually contain
 
-## File shape: debugging.md
+The three topical files are not "everything about design / testing /
+debugging in this project". They are the project's deltas, additions,
+and consequences on top of the shared guide. Anything the shared
+guide already covers without project specifics belongs to the shared
+guide.
 
-Same opening shape. One section per project-specific debugging
-concept:
+Common categories of content (use as a checklist during the topic
+walk; do not turn into mandatory sections):
 
-- Logging macros and how to enable trace builds.
-- Stack traces and rich error details (full-details helpers, stacktrace
-  toggle helpers, third-party trace libraries in use).
-- Sanitizer presets and the wrapper script that runs them.
-- Flaky-test bisection helper / state-pollution detection.
-- Error-code validator (`eccheck.sh` or equivalent) -- what it
-  enforces.
-- Replay or capture tools, if the project has them.
-- Where to record environmental or vendor-library debugging notes.
+**design.md typically contains, when the project has them:**
+
+- the component directory layout (boost-stuttering, flat, or
+  whatever the project uses), including where runtime wrappers and
+  test helpers live, and how adapter modules are named;
+- recurring `mil::fixed_string<N>` / `mil::inplace_function<Sig, N>`
+  size tables;
+- the X-macro / reflection-macro tricks the project uses
+  (`MIL_AUTO_JSON_PFR_NAMESPACE`, X-macro composite enums);
+- the error-handling triad (`error_code.hpp` + `errors.hpp` +
+  `error_handlers.hpp`), the numeric-prefix scheme, the catch-macro
+  family, the `make_error` shortcut, the validator script;
+- the wiring-helper family (`wire`, `wire_proxy`, `wire_noop`) and
+  its consequence: callbacks that assert on destruction;
+- the runtime layer split (functional core + `<domain>/runtime/`),
+  marshalled adapters, message-queue typedefs and their capacity
+  tuning;
+- the cross-cutting singleton pattern realised by the project's
+  variant-backed globals, plus how tests sandbox them;
+- the adapter recipe (abstract interface + per-X impls + runtime
+  layer);
+- hot-path helper choices and "do not adopt X -- broken" notes;
+- per-module `INDEX.md` / `README.md` conventions.
+
+**testing.md typically contains:**
+
+- the test-target layout (mirroring `src/`), the test framework
+  invocation glue (`catch_discover_tests`, etc.), and the tag
+  convention;
+- result-aware assertion helpers
+  (`mil::testing::require_error`, equivalents);
+- where factories, fixtures, and probes live and the naming pattern;
+- singleton-sandboxing RAII guards;
+- the deterministic-clock helper, plus the predicate-wait family;
+- integration-test boundaries (which tags or directories signal
+  "this boots a real vendor engine / socket / thread");
+- approval-test scaffolding (scrubbers, output directory layout);
+- the "wire every callback in tests too" recipe.
+
+**debugging.md typically contains:**
+
+- the logging-macro family, level-toggle, throttle variants, and
+  logger backends;
+- stack-trace integration (`cpptrace`, `boost::stacktrace`),
+  always-on stacktrace toggles, full-details helpers;
+- the sanitizer-preset table and suppression file locations;
+- flaky-test bisection invocation and reproducibility tools;
+- error-code validators and wiring validators;
+- domain-specific replay or capture tools;
+- where to look first when investigating a class of bug.
+
+These are categories to scan during discovery, not headings to
+guarantee. A project that has no flaky-test bisector simply does
+not get a flaky-test section.
 
 ## Self-review pass (before declaring done)
 
-Walk the draft top to bottom and check each section against this list.
-Any "yes" is a defect to fix.
+Walk every section of every topical file and apply the three-bucket
+filter sentence by sentence. For each sentence, classify it:
 
-- Could I delete this section and lose nothing the shared guide doesn't
-  cover? (Then delete it.)
-- Does this code example exist in the shared guide with different
-  names? (Then delete it.)
-- Does this paragraph re-explain *why* a pattern is good? (Then trim
-  to one sentence pointing at the shared guide for rationale.)
-- Does this section paste two near-identical code snippets to show the
-  same shape? (Then keep one, link the other.)
-- Does this row appear in the README mapping table and also in this
-  topical file? (Then delete the topical-file restatement.)
-- Does this link resolve? (Run `ls` on every path you wrote.)
+- (A) an **addition** -- project pattern the shared guide does not name;
+- (D) a **delta** -- project does this differently from the shared default;
+- (C) a **consequence** -- non-obvious outcome of following a shared rule;
+- (R) a routing sentence pointing at a file, symbol, or section
+      (allowed once or twice per section to introduce bullets);
+- (X) anything else (framing, rationale, restatement, motivation).
+
+Every (X) is a defect. Delete it. If a section is all (R)s and (X)s
+after the pass, the section has no content and should disappear.
+
+Then run the mechanical checks:
+
+- Does this link resolve? (`ls` every path you wrote.)
 - Did I cite a real example file, not a generic shape? (Open it and
-  confirm the cited symbol is at the cited line.)
+  confirm the symbol is at the cited line.)
+- Does this row appear in the README mapping table and also in a
+  topical file? (Delete the topical-file restatement.)
+- Is any section longer than ~6 short sentences or bullets? (Suspect
+  restatement; rerun the bucket filter on that section.)
 
-Also: if the project has an `AGENTS.md`, `CLAUDE.md`, or equivalent
+If the project has an `AGENTS.md`, `CLAUDE.md`, or equivalent
 agent-entry doc, add a short pointer from there into the new folder.
 The local mapping is most useful when agents can find it on the first
 pass.
 
 ## Anti-patterns
 
+- Writing framing or rationale prose before getting to the
+  project-specific bullet. The reader has the shared guide loaded;
+  jump straight to additions, deltas, and consequences.
+- Drafting topical files top to bottom in prose rather than
+  extracting bullets first. The bullet-first procedure exists because
+  prose-first drafting reliably produces restatement padding.
+- Treating the content categories above as a checklist of required
+  sections. A project that has no flaky-test bisector does not get a
+  flaky-test section.
 - Writing prose that explains why strong types are good. The shared
   guide owns rationale.
 - Pasting the shared guide's enum-switch / variant-match / state-machine
