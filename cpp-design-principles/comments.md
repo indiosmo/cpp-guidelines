@@ -140,6 +140,55 @@ Likewise, do not list non-responsibilities. A converter comment should say what
 it converts, not enumerate routing, storage, logging, and status resolution that
 happen somewhere else.
 
+Do not paraphrase how standard library or framework internals work. The comment
+should state the block's intent in the function's own terms, not narrate the
+implementation of the tools it uses.
+
+```cpp
+// BAD - describes how views::split is implemented.
+// std::views::split on a contiguous_range yields contiguous subranges;
+// each one materialises into a string_view without copying input bytes.
+for (const auto subrange : raw | std::views::split(separator)) {
+
+// GOOD - names what the loop does in the function's terms.
+// iterate each token, look it up in the table, and set the corresponding bit.
+for (const auto subrange : raw | std::views::split(separator)) {
+```
+
+Do not reassert behavior that a wrapper, macro, or idiom already carries. A
+line wrapped in `BOOST_LEAF_ASSIGN` is visibly failable, and a `result<T>`
+return already signals propagation. Comment the step, not the error-handling
+mechanics.
+
+```cpp
+// BAD - restates the failable nature and the propagation policy.
+// Linear scan by token projection. mil::find_element raises
+// mil::error_code::not_found, which we let propagate without dressing up.
+BOOST_LEAF_ASSIGN(const auto& entry, mil::find_element(table, token, &row_type::token));
+
+// GOOD - names the step.
+// map token to flag.
+BOOST_LEAF_ASSIGN(const auto& entry, mil::find_element(table, token, &row_type::token));
+```
+
+Prefer terse phrasing. When a short phrase carries the same intent as an
+exhaustive enumeration, use the short phrase. The reader can recover the cases
+from the code; they cannot recover the intent.
+
+```cpp
+// BAD - enumerates the cases the guard catches.
+// skip leading, trailing, and doubled separators.
+if (segment.empty()) {
+  continue;
+}
+
+// GOOD - names what the guard is for.
+// skip whitespace.
+if (segment.empty()) {
+  continue;
+}
+```
+
 ## Shape
 
 Prefer `//` for guiding comments inside function bodies. Use `/* ... */` for
