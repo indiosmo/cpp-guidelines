@@ -1,83 +1,12 @@
-# C++ Conventions Agent Context
+# C++ Conventions -- Examples
 
-Use this with `cpp-design-principles-agent-context.md`. This file is example
-heavy on purpose: agents should copy these shapes and adapt the namespace
-mapping to the target project.
-
-Examples use:
-
-- `lib::result<T>` for the project `boost::leaf::result<T>` alias;
-- `lib::strong_type<T, Tag>` for the local strong-type helper;
-- `lib::fixed_string<N>` for bounded hot-path text;
-- `lib::inplace_function<Sig, Capacity>` for fixed-capacity callbacks;
-- `lib::scope_exit` for rollback guards;
-- `lib::match` for exhaustive variant visitation.
-
-## Layout
-
-Use the codebase's component layout. The common shape is:
-
-```text
-src/<component>/<component>/     public headers
-src/<component>/src/             implementation
-test/<component>/                tests
-```
-
-Functional code lives in the component root. Runtime wrappers live under
-`<component>/runtime/`. Adapters that translate between domains carry both
-domains in the name, for example `aor_fwll` or `aorfix_onixs_fix`.
-
-## Formatting And Blank Lines
-
-Use blank lines to mark phases in a function. Separate setup from a loop,
-separate a multi-line loop or branch from the next statement, and separate the
-final `return` from the block that computes its value.
-
-Good:
-
-```cpp
-types::quantity total{0};
-
-for (const auto& order : orders) {
-  total += order.remaining_quantity;
-}
-
-return total;
-```
-
-Good:
-
-```cpp
-template <typename Alt>
-auto request_id_of(const Alt& alt) -> std::optional<types::request_id>
-{
-  if constexpr (requires { alt.request_id; }) {
-    return alt.request_id;
-  }
-
-  return std::nullopt;
-}
-```
-
-Keep tightly coupled guard code together. A lookup and the `if` that checks it
-are one unit, and a guard body can keep its diagnostic and early exit together.
-
-Good:
-
-```cpp
-auto order_it = orders_.find(request.order_id);
-if (order_it == orders_.end()) {
-  log_warn("unknown order");
-  return;
-}
-```
+Good/bad code pairs that illustrate the rules in
+[`cpp-conventions-agent-context.md`](cpp-conventions-agent-context.md).
+Load this file on demand when the rule alone is not enough to shape an
+edit. Sections match the rules file. Examples use `lib::` placeholders --
+substitute the local project vocabulary.
 
 ## Tests
-
-Tests verify intended behavior, not implementation mechanics. Start from the
-domain, protocol, contract, or bug report. Use the implementation to understand
-the code path, but do not compute expected values by re-running the same logic
-the test is supposed to check.
 
 Good:
 
@@ -89,49 +18,17 @@ TEST_CASE("rectangle - area", "[geometry]")
 }
 ```
 
-Bad:
+Bad -- expected value rederived from the implementation:
 
 ```cpp
 TEST_CASE("rectangle - area", "[geometry]")
 {
   const auto r = rectangle{.width = 6, .height = 4};
-  CHECK(r.area() == r.width * r.height); // tautological
+  CHECK(r.area() == r.width * r.height);
 }
 ```
 
-For bug fixes, add or tighten a test that fails before the fix. Confirm the
-red state, then change production code until the test passes. For new
-behavior, prefer writing the behavior test first so the contract shapes the
-implementation.
-
-When an expectation is non-obvious, name its source in the test comment or row
-label: a protocol rule, public spec, fixture, black-box scenario, or bug
-report. If the contract is type-level, test it at compile time with
-`static_assert` / `STATIC_REQUIRE` instead of adding runtime scaffolding.
-
-Keep test bodies dense with useful signal. Name the scenario, set up only the
-data that matters, and assert outcomes a real defect would violate. Avoid
-large suites of low-value cases that restate constructors, getters, or the
-current algorithm without establishing intent.
-
-Component tests should drive the functional surface directly. Construct domain
-values, call the public function or stage entry point, and capture observable
-outputs through callbacks or returned values. Do not spin runtime threads,
-sockets, event loops, or SDK fixtures unless the test is explicitly about that
-integration boundary.
-
-Use factories, presets, and probes to keep setup out of the behavioral story.
-Factories should let a test override only the fields that matter. Probes are
-for narrow internal hygiene or branch setup that the public API should not
-expose. For tests, sandboxes, and spikes, wire explicit noop callbacks for
-irrelevant outputs; production wiring must assign real callbacks.
-
 ## Debugging
-
-Before fixing a failing test or bug, identify the root cause. Capture the
-exact failure, read the complete message or stack trace, reproduce it with the
-smallest command or scenario, and trace the bad value or state backward to the
-first component that produced it.
 
 Good debugging loop:
 
@@ -147,27 +44,7 @@ Bad debugging loop:
 change code -> rerun test -> change more code -> rerun test
 ```
 
-When the failure is deep in a call chain, add temporary logging before the
-suspect call so the log captures the inputs that caused the failure. For
-threaded or callback-heavy paths, capture enough context to identify the
-request, branch, or test case that reached the bad state.
-
-Use assertions for programmer invariants that should be impossible in correct
-code. Return structured errors for invalid input or caller-visible failure
-conditions. If a bug fix adds a runtime check, decide whether the stronger fix
-is a refined type, parse-at-boundary conversion, boundary validation, rollback
-guard, or explicit error path.
-
-For flaky tests, suspect timing and leaked state first. Replace sleeps with
-predicate waits, and wrap global providers, singleton alternatives, clocks,
-environment variables, and other process-wide state in RAII guards so each
-test restores the previous state even after a `REQUIRE` failure.
-
 ## Domain Types
-
-Put a `types.hpp` in every domain from the start. Define domain types inside a
-nested `types` namespace. Keep the `types::` qualifier even inside the domain;
-it makes ownership visible and avoids field/type name collisions.
 
 Good:
 
@@ -206,10 +83,7 @@ using types::quantity; // Do not pull nested domain types upward.
 }
 ```
 
-Use strong types ergonomically. Do not unwrap and rewrap when the strong type
-already supports the operation.
-
-Good:
+Strong-type ergonomics inside the domain. Good:
 
 ```cpp
 types::quantity total{0};
@@ -221,7 +95,7 @@ for (const auto& order : orders) {
 return total;
 ```
 
-Bad:
+Bad -- unwrap and rewrap:
 
 ```cpp
 std::uint64_t total = 0;
@@ -233,13 +107,7 @@ for (const auto& order : orders) {
 return types::quantity{total};
 ```
 
-Only use `.get()` at a real boundary that requires the primitive.
-
 ## Strong-Type Ergonomics
-
-Strong types are meant to reduce mismatch bugs without burying domain logic
-under conversion ceremony. Use the strong type directly when the operation can
-stay in the strong type.
 
 Good:
 
@@ -256,35 +124,17 @@ remaining_quantity = types::quantity{remaining_quantity.get() - fill_quantity.ge
 fmt::format("{}", order_id.get());
 ```
 
-Same-type arithmetic preserves the strong type. Mixed expressions may fall back
-to the underlying type when the local helper allows implicit underlying
-references. Re-wrapping a mixed result must be explicit at the call site, which
-makes domain mismatches reviewable.
-
-Good:
+Mixed expressions, explicit rewrapping:
 
 ```cpp
 auto net = filled_quantity - canceled_quantity; // quantity
 auto raw = filled_quantity - limit_price;       // underlying type, visibly mixed
+auto suspicious = types::quantity{filled_quantity - limit_price}; // review carefully
 ```
-
-Review carefully:
-
-```cpp
-auto suspicious = types::quantity{filled_quantity - limit_price};
-```
-
-That construction is allowed when the underlying type can construct the target,
-but the names should make the mismatch stand out.
 
 ## Cross-Domain Strong-Type Construction
 
-Do not write conversion helpers solely to move between two strong types with
-the same safe representation. Construct the target strong type directly. If the
-local strong-type helper permits the conversion, it compiles; if not, the
-compiler rejects it.
-
-Good:
+Good -- direct construction:
 
 ```cpp
 void submit_to_risk(routing::types::order_id routing_id)
@@ -294,7 +144,7 @@ void submit_to_risk(routing::types::order_id routing_id)
 }
 ```
 
-Bad:
+Bad -- helper with no domain knowledge:
 
 ```cpp
 auto to_risk_order_id(routing::types::order_id id) -> risk::types::order_id
@@ -308,12 +158,7 @@ void submit_to_risk(routing::types::order_id routing_id)
 }
 ```
 
-The helper adds machinery but no domain knowledge.
-
-Use a named conversion helper when the mapping is semantic, lossy, fallible, or
-shape-changing.
-
-Good helpers:
+Helpers that earn their name:
 
 ```cpp
 auto side_to_fix_char(types::side side) -> char;
@@ -322,20 +167,7 @@ auto truncate_client_id(external::types::client_id id)
     -> lib::result<internal::types::client_id>;
 ```
 
-Bad helper:
-
-```cpp
-auto to_risk_order_id(routing::types::order_id id) -> risk::types::order_id;
-// Same representation, no validation, no semantic mapping.
-```
-
 ## Designated Initializers
-
-Use designated initializers for aggregates. Use trailing commas on multi-line
-initializers. Omit fields that already have defaults.
-
-Use brace elision for non-scalar fields such as strong types and containers;
-use `=` for scalars.
 
 Good:
 
@@ -354,7 +186,7 @@ auto event = order_placed{
 };
 ```
 
-Bad:
+Bad -- positional, or strong-type rewrap noise:
 
 ```cpp
 auto config = server_config{"0.0.0.0", 8080, true, 1024};
@@ -365,16 +197,7 @@ auto event = order_placed{
 };
 ```
 
-The field name already supplies the role; repeating the strong type usually
-adds noise.
-
 ## Namespace Aliases
-
-Never add namespace aliases or `using` declarations to headers. They leak into
-includers and make lookup depend on include order.
-
-In `.cpp` and test files, use aliases only when a file repeatedly mixes domain
-vocabularies. Use short, stable aliases already common in the project.
 
 Good:
 
@@ -397,8 +220,7 @@ using namespace order_routing; // never in project code
 using order_routing::types::price;
 ```
 
-Within a function, local aliases for dense template or FSM namespaces are fine
-when they improve readability:
+Local aliases inside a function are fine:
 
 ```cpp
 namespace sml = boost::sml;
@@ -406,8 +228,6 @@ namespace fsm = gateway::detail::session_state_machine_fsm;
 ```
 
 ## Const Placement
-
-Use west const.
 
 Good:
 
@@ -424,12 +244,6 @@ for (auto const& order : orders) { /* ... */ }
 ```
 
 ## Comments
-
-Use `/* ... */` for class, struct, header, and larger API documentation. Use
-`//` for guiding comments inside function bodies. Comment present intent,
-non-obvious behavior, and non-obvious ordering. Do not narrate obvious code,
-describe old behavior, keep a trail of past decisions, record a migration
-trail, or list what another layer handles.
 
 Good class/header comment:
 
@@ -479,20 +293,7 @@ lib::match(cmd, [this](const auto& cmd) { handle(cmd); });
 ++counter;
 ```
 
-Lean toward comments that summarize a block, even when the syntax is not
-complex. A single sentence is faster to read than a loop, branch, or lambda
-body. Consecutive block comments should read like the function's table of
-contents.
-
-Strongly comment non-obvious single lines: dense punctuation, designated
-initializers across domains, chained calls, iterator invalidation, lifetime
-contracts, performance-sensitive ordering, and protocol rules. Skip comments
-for short, self-describing one-liners and repeatable local idioms. In
-particular, a plain `lib::match` / `mil::match` dispatcher is usually
-self-evident even if the syntax looks busy; comment the non-obvious choice
-inside the visitor, not the fact that variant dispatch is happening.
-
-If a precondition matters, phrase it as the invariant the code relies on:
+Precondition phrased as the invariant the code relies on:
 
 ```cpp
 // precondition: session mutex is held; next_seq is read and incremented without locking here.
@@ -500,13 +301,6 @@ auto next = session_.next_seq++;
 ```
 
 ## Error Types
-
-Each domain owns:
-
-```text
-<domain>/error_code.hpp   enum class error_code + std::error_code plumbing
-<domain>/errors.hpp       structured error payloads with code()/what()
-```
 
 Good:
 
@@ -530,22 +324,16 @@ struct unknown_order {
 } // namespace routing::errors
 ```
 
-Bad:
+Bad -- loses typed context:
 
 ```cpp
 return lib::make_leaf_error(lib::error_code::generic_error,
-                            "unknown routing order"); // loses typed context
+                            "unknown routing order");
 ```
-
-Generic errors are fine for generic infrastructure failures such as bad config.
-Domain failures should carry structured domain context.
 
 ## Result Flow
 
-Inside a domain, compose fallible steps with `BOOST_LEAF_ASSIGN` and
-`BOOST_LEAF_CHECK`.
-
-Good:
+Good -- inside the domain:
 
 ```cpp
 lib::result<void> route(const new_order& request)
@@ -557,7 +345,7 @@ lib::result<void> route(const new_order& request)
 }
 ```
 
-Bad:
+Bad -- bool plus side-channel logging:
 
 ```cpp
 bool route(const new_order& request)
@@ -575,10 +363,7 @@ bool route(const new_order& request)
 }
 ```
 
-At public boundaries, consume `lib::result` with `boost::leaf::try_handle_all`
-or `try_handle_some`, then return the boundary's vocabulary.
-
-Good:
+Good -- at a public boundary:
 
 ```cpp
 void engine::handle(const request& request)
@@ -595,21 +380,15 @@ void engine::handle(const request& request)
 }
 ```
 
-Bad:
+Bad -- LEAF boundary leaked through the signature:
 
 ```cpp
-lib::result<void> engine::handle(const request& request); // leaks LEAF boundary
+lib::result<void> engine::handle(const request& request);
 ```
-
-Allowed exception: a utility algorithm whose public contract is "this fallible
-algorithm returns the project result type."
 
 ## Error Handler Ordering
 
-LEAF handlers are ordered. Put specific, intentional cases first and catch-alls
-last.
-
-Good order:
+Good -- specific before catch-all:
 
 ```cpp
 return std::tuple_cat(
@@ -626,22 +405,17 @@ return std::tuple_cat(
     LIB_RESULT_CATCH_ALL(return reject_internal(request);)));
 ```
 
-Bad:
+Bad -- catch-all shadows the specific handler:
 
 ```cpp
 return std::make_tuple(
   LIB_RESULT_CATCH_ALL(return reject_internal(request);),
   [&](match_error<invalid_field> err) { return reject(request, err.value()); });
-// The catch-all shadows the specific handler.
 ```
 
 ## Exhaustiveness
 
-For `enum class`, switch without `default` so the compiler catches missing
-enumerators. Return a structured error after the switch for corrupted or
-deserialized impossible values.
-
-Good:
+Good -- typed enum, no `default`:
 
 ```cpp
 auto to_wire(types::side side) -> lib::result<char>
@@ -655,7 +429,7 @@ auto to_wire(types::side side) -> lib::result<char>
 }
 ```
 
-For untyped boundary values, use `default` because the compiler cannot help:
+Good -- untyped boundary value, `default` required:
 
 ```cpp
 auto parse_side(char value) -> lib::result<types::side>
@@ -673,8 +447,6 @@ auto parse_side(char value) -> lib::result<types::side>
 ```
 
 ## Variants
-
-Use `lib::match` for domain decisions. Add one arm per meaningful alternative.
 
 Good:
 
@@ -697,14 +469,7 @@ if (std::holds_alternative<new_order>(req)) {
 }
 ```
 
-Use `lib::match_partial` only for intentional subscriptions where ignored
-alternatives are no-ops.
-
 ## Pipeline Callbacks
-
-Stage callbacks are public wiring fields, usually `on_<event>`, stored as
-`lib::inplace_function`. Production wiring must assign every non-defaulted
-callback before it can fire.
 
 Good:
 
@@ -724,29 +489,22 @@ session.on_request = [&engine, &engine_loop](request&& req) {
 };
 ```
 
-Bad:
+Bad -- session knows its consumer and thread policy:
 
 ```cpp
 class session {
 public:
-  engine* engine_; // session now knows its consumer and thread policy
+  engine* engine_;
 };
 ```
 
-For tests, sandboxes, and constructor-failure cleanup only, wire explicit noop
-callbacks for irrelevant outputs:
+Test/sandbox wiring:
 
 ```cpp
 stage.on_rejected = [](rejection&&) {};
 ```
 
-Do not hide missing production wiring with default noops unless the callback is
-truly optional.
-
 ## Scope Guards
-
-Use scope guards when partial mutation must be rolled back on any failure path.
-Dismiss guards only after the whole operation commits.
 
 Good:
 
@@ -764,18 +522,15 @@ undo_order.dismiss();
 return {};
 ```
 
-Bad:
+Bad -- failure leaves order inserted:
 
 ```cpp
 orders_.emplace(request.order_id, build_order_state(request));
-BOOST_LEAF_CHECK(limits_.reserve(request)); // failure leaves order inserted
+BOOST_LEAF_CHECK(limits_.reserve(request));
 requests_.emplace(request.request_id, build_request_state(request));
 ```
 
 ## Runtime Posts
-
-Post across threads. Capture moved messages by value. Keep closures small
-enough for the project's inplace-function task storage.
 
 Good:
 
@@ -785,22 +540,15 @@ output_loop.post([this, ev = std::move(ev)]() mutable {
 });
 ```
 
-Bad:
+Bad -- ev may dangle after the caller returns:
 
 ```cpp
 output_loop.post([&] {
-  publisher_.send(ev); // ev may dangle after the caller returns
+  publisher_.send(ev);
 });
 ```
 
-Do not wait synchronously for a result from the target loop. Model replies as
-events posted back.
-
 ## State Machines
-
-Put Boost.SML state machine vocabulary in a detail namespace. Use `ev_*` event
-tags, `st_*` state tags, an `actions` struct of injected callbacks, and a
-transition table. The owner stores actions before the machine.
 
 Good:
 
@@ -830,22 +578,15 @@ struct transitions {
 } // namespace gateway::detail::session_state_machine_fsm
 ```
 
-Bad:
+Bad -- correlated booleans:
 
 ```cpp
 bool connected_ = false;
 bool connecting_ = false;
 bool retrying_ = false;
-// Illegal combinations are now representable.
 ```
 
-For non-trivial machines, put a PlantUML `/* @startuml ... @enduml */` block
-immediately above the transition table and update it with every table change.
-
 ## Concepts And Requires
-
-Use concepts for public template contracts. Use inline `requires` for local
-capability dispatch.
 
 Good:
 
@@ -867,7 +608,7 @@ auto request_id_of(const Alt& alt) -> std::optional<types::request_id>
 }
 ```
 
-Bad:
+Bad -- dispatch on type name:
 
 ```cpp
 template <typename Alt>
@@ -879,11 +620,7 @@ auto request_id_of(const Alt& alt)
 }
 ```
 
-Dispatch on capability when the data shape is what matters.
-
 ## Hot-Path Storage
-
-Use bounded storage on measured or explicitly constrained hot paths.
 
 Good:
 
@@ -904,14 +641,7 @@ std::vector<order> orders_;       // grows during request handling
 std::function<void(message&&)> cb; // may allocate when assigned
 ```
 
-Use node maps when references or pointers must survive inserts and rehashes.
-Use flat maps for cache-friendly lookup tables where no long-lived reference is
-kept.
-
 ## Result Pipeline Extraction
-
-When a function has three or more sequential fallible steps, extract named
-helpers and let the body read as the success path.
 
 Before:
 
@@ -954,6 +684,3 @@ void handle(const cancel_order& request)
     LIB_RESULT_CATCH_ALL(log_error("unhandled cancel error")));
 }
 ```
-
-Skip this extraction for one or two obvious checks, or when the scaffolding
-would create more error types than clarity.

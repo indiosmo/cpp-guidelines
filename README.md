@@ -36,11 +36,18 @@ as:
 - Which local examples show the generic design, testing, and debugging rules in
   real code?
 
-The [`repo-specific-cpp-guidelines`](skills/repo-specific-cpp-guidelines/)
+The [`repo-specific-cpp-guidelines`](agent/skills/repo-specific-cpp-guidelines/)
 skill bundled in this repository drives that mapping work: it walks the
 shared guides and the consuming repo and writes the local mapping folder.
 Install the skill into a Claude Code agent that has access to the
 consuming repository, then invoke it from there.
+
+## Agent context
+
+The [`agent/`](agent/) folder collects the always-loaded agent context
+(principles and conventions, plus on-demand examples) and the
+`repo-specific-cpp-guidelines` skill. Agents consume these directly;
+humans should read the topical guides above instead.
 
 ## Conventions
 
