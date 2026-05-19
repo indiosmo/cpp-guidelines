@@ -151,6 +151,7 @@ auto execute_order(order const& o)
     log_error("execute_order failed: id={}, error={}",
               o.id, result.error());
   }
+
   return result;
 }
 ```

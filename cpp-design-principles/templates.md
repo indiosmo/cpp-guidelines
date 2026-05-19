@@ -101,9 +101,9 @@ auto request_id_of(const order_event& ev) -> std::optional<types::request_id>
     [](const auto& alt) -> std::optional<types::request_id> {
       if constexpr (requires { alt.request_id; }) {
         return alt.request_id;
-      } else {
-        return std::nullopt;
       }
+
+      return std::nullopt;
     });
 }
 ```

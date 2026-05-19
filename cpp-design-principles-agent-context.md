@@ -471,6 +471,7 @@ return lib::match(event, [](const auto& alt) -> std::optional<types::request_id>
   if constexpr (requires { alt.request_id; }) {
     return alt.request_id;
   }
+
   return std::nullopt;
 });
 ```

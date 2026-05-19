@@ -384,12 +384,14 @@ element satisfying P?"), the predicate names the question.
 ```cpp
 // BAD - flag and break
 bool has_expired = false;
+
 for (const auto& o : orders) {
   if (o.expiry < now) {
     has_expired = true;
     break;
   }
 }
+
 if (has_expired) {
   return reject::expired_order_present;
 }
@@ -415,6 +417,7 @@ for (std::size_t i = 0; i < fields.size(); ++i) {
     return std::format("field {} is missing", fields[i].name);
   }
 }
+
 return std::nullopt;
 ```
 
@@ -426,6 +429,7 @@ constexpr auto is_missing = [](const auto& f) {
 
 const auto it = std::ranges::find_if(fields, is_missing);
 if (it == fields.end()) return std::nullopt;
+
 return std::format("field {} is missing", it->name);
 ```
 
@@ -435,6 +439,7 @@ return std::format("field {} is missing", it->name);
 ```cpp
 // BAD - hand-rolled loop searching for the first active session
 session* found = nullptr;
+
 for (auto& sess : sessions) {
   if (sess.is_active()) {
     found = &sess;

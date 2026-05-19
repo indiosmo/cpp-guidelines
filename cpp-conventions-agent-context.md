@@ -27,6 +27,51 @@ Functional code lives in the component root. Runtime wrappers live under
 `<component>/runtime/`. Adapters that translate between domains carry both
 domains in the name, for example `aor_fwll` or `aorfix_onixs_fix`.
 
+## Formatting And Blank Lines
+
+Use blank lines to mark phases in a function. Separate setup from a loop,
+separate a multi-line loop or branch from the next statement, and separate the
+final `return` from the block that computes its value.
+
+Good:
+
+```cpp
+types::quantity total{0};
+
+for (const auto& order : orders) {
+  total += order.remaining_quantity;
+}
+
+return total;
+```
+
+Good:
+
+```cpp
+template <typename Alt>
+auto request_id_of(const Alt& alt) -> std::optional<types::request_id>
+{
+  if constexpr (requires { alt.request_id; }) {
+    return alt.request_id;
+  }
+
+  return std::nullopt;
+}
+```
+
+Keep tightly coupled guard code together. A lookup and the `if` that checks it
+are one unit, and a guard body can keep its diagnostic and early exit together.
+
+Good:
+
+```cpp
+auto order_it = orders_.find(request.order_id);
+if (order_it == orders_.end()) {
+  log_warn("unknown order");
+  return;
+}
+```
+
 ## Tests
 
 Tests verify intended behavior, not implementation mechanics. Start from the
@@ -168,9 +213,11 @@ Good:
 
 ```cpp
 types::quantity total{0};
+
 for (const auto& order : orders) {
   total += order.remaining_quantity;
 }
+
 return total;
 ```
 
@@ -178,9 +225,11 @@ Bad:
 
 ```cpp
 std::uint64_t total = 0;
+
 for (const auto& order : orders) {
   total += order.remaining_quantity.get();
 }
+
 return types::quantity{total};
 ```
 
@@ -813,6 +862,7 @@ auto request_id_of(const Alt& alt) -> std::optional<types::request_id>
   if constexpr (requires { alt.request_id; }) {
     return alt.request_id;
   }
+
   return std::nullopt;
 }
 ```

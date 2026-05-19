@@ -90,6 +90,7 @@ resting_index_.emplace(incoming_key, node);
 // walk the side map from best outward; consume each crossing level until
 // the taker quantity runs out or the next level no longer crosses.
 auto it = side_map.begin();
+
 while (it != side_map.end() && taker.remaining_quantity > 0 && crosses(taker, it->first)) {
   const auto level_trades = consume_level(it->second, it->first, taker, on_trade, on_release);
   // ...
