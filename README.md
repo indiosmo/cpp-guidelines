@@ -36,8 +36,11 @@ as:
 - Which local examples show the generic design, testing, and debugging rules in
   real code?
 
-Use [`repo-specific-cpp-guidelines-agent-context.md`](repo-specific-cpp-guidelines-agent-context.md)
-as the handoff file for an agent creating that layer in a new C++ repository.
+The [`repo-specific-cpp-guidelines`](skills/repo-specific-cpp-guidelines/)
+skill bundled in this repository drives that mapping work: it walks the
+shared guides and the consuming repo and writes the local mapping folder.
+Install the skill into a Claude Code agent that has access to the
+consuming repository, then invoke it from there.
 
 ## Conventions
 
