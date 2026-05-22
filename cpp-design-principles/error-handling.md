@@ -235,6 +235,54 @@ expects.
 The `ErrorData` concept connects both ends: handlers match on the typed
 struct; everything between treats the error as opaque.
 
+### Unwrapping a result
+
+Domain code unwraps `lib::result<T>` through the propagation macros --
+`BOOST_LEAF_ASSIGN` to bind the success value, `BOOST_LEAF_CHECK` for
+the void case. Neither `.value()`, `operator->`, nor `operator*` is the
+in-domain unwrap.
+
+`result::value()` throws on an error result and sidesteps the LEAF
+trail in the process. It changes the failure channel from result-return
+to exception, which is the wrong contract for code that has already
+opted into result propagation.
+
+`result::operator->` returns `nullptr` on an error result, so a chained
+call like `r->member()` dereferences null when the result is an error.
+The same trap applies to `result::operator*`. These mirror the contract
+of `std::optional::operator*` and `operator->` on an empty optional: the
+operators are valid only when a precondition (the result holds a value)
+has been checked first, and the macros are how that check happens in
+this code.
+
+Tests unwrap through their own macro -- a `LIB_REQUIRE_RESULT`-style
+form that asserts success and binds the value -- so a test never sees
+the trap. The macro turns a failure into a test assertion at the call
+site rather than a thrown exception two frames up.
+
+Use the macros for every unwrap, including when the eventual access is
+a member of the wrapped value. A combined
+`lib::result<lib::strong_type<T, Tag>>` unwraps with the LEAF macro
+first, then chains through the strong type's `->` to reach the
+underlying member. Each unwrap is the idiom for its layer; stacking them
+mixes layers and reintroduces the trap.
+
+```cpp
+// GOOD - macro unwraps the result, strong type chains to the underlying
+BOOST_LEAF_ASSIGN(const auto& order_id, tracker.get_order_id(client_id));
+log_info("order {}", order_id->to_string_view());
+```
+
+```cpp
+// BAD - result::operator-> returns nullptr on an error result
+const auto id = tracker.get_order_id(client_id)->to_string_view();
+```
+
+```cpp
+// BAD - result::value() throws at a site that does not expect to catch
+const auto id = tracker.get_order_id(client_id).value()->to_string_view();
+```
+
 ## Exceptions do not cross component boundaries
 
 A component's public surface is a contract about how it can fail. A

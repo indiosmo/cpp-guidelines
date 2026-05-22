@@ -177,6 +177,13 @@ type directly. Use a named conversion helper only when the mapping is
 semantic, lossy, fallible, or shape-changing (enum to wire integer,
 parse to refined type, narrowing fixed string).
 
+When the underlying type has member functions worth calling -- a
+decimal's `as_double()`, a bounded string's `to_string_view()` -- reach
+them through the strong type's `operator->` rather than
+`.get().member()`. The arrow keeps the read in the strong type until it
+actually crosses into the underlying, which makes `.get()` mean "I need
+the primitive at this exact line" instead of being routine boilerplate.
+
 ## Designated Initializers
 
 Use designated initializers for aggregates. Use trailing commas on
@@ -297,9 +304,17 @@ ignored alternatives are no-ops. Prefer capability dispatch
 (`if constexpr (requires { alt.request_id; })`) to type-name
 dispatch.
 
-Use concepts for public template contracts. Use inline `requires` for
-local capability dispatch. Use dependent-false helpers when an
-unsupported template instantiation should fail only after selection.
+Use concepts for public template contracts. Constrain a template
+parameter whenever the body assumes a shape (nested types, static
+factories, member functions); a bare `typename T` advertises "any
+type" and pushes the contract into a deep substitution failure. When
+the parameter must be a specific class-template specialisation, pair
+the concept with a small `is_X` / `is_X_v` traits set and combine both
+checks. Constraining the parameter does not change the call site --
+deduction still works -- it only adds a check at instantiation. Use
+inline `requires` for local capability dispatch. Use dependent-false
+helpers when an unsupported template instantiation should fail only
+after selection.
 
 ## State Machines
 

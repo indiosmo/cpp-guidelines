@@ -114,6 +114,28 @@ that wires order routing, a risk engine, and external APIs through their
 respective adapters is one example. Such a layer depends on each domain it
 composes, translates between their types, and exposes its own surface upward.
 
+### Internal shape of an adapter module
+
+An adapter that has to support more than one counterparty, codec, or
+vendor follows a recurring three-piece recipe:
+
+1. A domain-facing abstract interface declared in the adapter module's
+   root, named for the role -- `codec`, `counterparty`, `session`. The
+   domain side depends on this interface only.
+2. Per-vendor or per-counterparty implementations under a sibling
+   directory (`counterparties/`, `codecs/`, `<vendor>/`). Each
+   implementation lives in one place, so adding a new counterparty
+   means adding a new sibling rather than editing existing ones.
+3. A runtime layer that composes the implementation with the vendor
+   session and exposes the adapter as a domain `source` / `sink` (or
+   whatever the pipeline vocabulary names).
+
+The split keeps three concerns apart: the abstract interface keeps the
+domain side from depending on vendor headers; the per-vendor directory
+lets a new counterparty land in one place; the runtime layer is the only
+piece that ties vendor SDK threading and lifetime to the domain
+pipeline.
+
 ## Forward-only dependencies
 
 Dependencies form a DAG: arrows point one way.

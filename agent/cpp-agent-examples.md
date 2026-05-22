@@ -223,6 +223,38 @@ auto raw = filled_quantity - limit_price;       // underlying type, visibly mixe
 auto suspicious = types::quantity{filled_quantity - limit_price}; // review carefully
 ```
 
+Member access goes through the wrapper's arrow. Good -- chain through
+the strong type to a member of the underlying:
+
+```cpp
+// secinfo.contract_multiplier : lib::strong_type<lib::decimal, ContractMultiplierTag>
+const auto multiplier = secinfo.contract_multiplier->as_double();
+
+// order_state.source_name : lib::strong_type<lib::fixed_string<42>, SourceNameTag>
+log_info("source {}", order_state.source_name->to_string_view());
+```
+
+Bad -- `.get().member()` adds an unwrap where the arrow already names
+the underlying member operation:
+
+```cpp
+const auto multiplier = secinfo.contract_multiplier.get().as_double();
+log_info("source {}", order_state.source_name.get().to_string_view());
+```
+
+Bad -- assignment through `.get()` tries to mutate through a read-only
+view:
+
+```cpp
+order.symbol.get() = "PETR4";
+```
+
+Good -- construct a new strong-typed value and assign that whole:
+
+```cpp
+order.symbol = types::symbol{"PETR4"};
+```
+
 ## Designated Initializers
 
 Good:
@@ -541,6 +573,50 @@ void handle(const cancel_order& request)
 }
 ```
 
+Result unwrap goes through the propagation macros. Good -- macro
+unwraps the result and binds the success value:
+
+```cpp
+BOOST_LEAF_ASSIGN(const auto& token, format_flag_set(set, exec_inst_table));
+process(token);
+```
+
+Good -- `BOOST_LEAF_CHECK` for the void case:
+
+```cpp
+BOOST_LEAF_CHECK(commit_order(request));
+```
+
+Bad -- `result->member` is unchecked. On an error result,
+`lib::result::operator->` returns `nullptr`, and the chained call
+dereferences null:
+
+```cpp
+fmt::format("{}", format_flag_set(set, exec_inst_table)->to_string_view());
+```
+
+Bad -- `.value()` throws on error at a site that does not expect to
+catch:
+
+```cpp
+const auto wire = format_flag_set(set, exec_inst_table).value().to_string_view();
+```
+
+Combined `lib::result<lib::strong_type<T, Tag>>` -- unwrap the result
+with the LEAF macro first, then chain through the strong type's arrow.
+Good:
+
+```cpp
+BOOST_LEAF_ASSIGN(const auto& order_id, tracker.get_order_id(client_id));
+log_info("order {}", order_id->to_string_view());
+```
+
+Bad -- `.value().get()` stacks both unidiomatic unwraps:
+
+```cpp
+const auto id = tracker.get_order_id(client_id).value().get().to_string_view();
+```
+
 ## Invariants And Rollback
 
 Commit-at-end -- mutate a copy, swap in on success:
@@ -660,6 +736,63 @@ auto request_id_of(const Alt& alt)
     return alt.request_id;
   }
 }
+```
+
+Constrain a template that assumes a shape. The body of
+`make_error_handlers` reads `Outcome::result_type`, calls
+`Outcome::error(...)` and `Outcome::fault()`; that contract belongs in
+the signature.
+
+Bad -- bare `typename`, contract hidden in the body:
+
+```cpp
+template <typename Outcome, lib::Tuple... Handlers>
+auto make_error_handlers(const new_order& req, Handlers&&... handlers);
+```
+
+Good -- concept names the contract; misuse fails at the call site:
+
+```cpp
+template <lib::Outcome Outcome, lib::Tuple... Handlers>
+auto make_error_handlers(const new_order& req, Handlers&&... handlers);
+```
+
+The deduction-friendly call site is unchanged either way:
+
+```cpp
+// Caller writes the outcome alias once; result/error types are deduced.
+auto handlers = make_error_handlers<order_outcome>(req);
+```
+
+Concept paired with a small trait when the parameter must be a specific
+class-template specialisation:
+
+```cpp
+namespace detail {
+
+template <typename T>
+struct is_outcome : std::false_type {};
+
+template <typename Result, typename Error>
+struct is_outcome<outcome<Result, Error>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_outcome_v = is_outcome<T>::value;
+
+} // namespace detail
+
+template <typename T>
+concept Outcome =
+  detail::is_outcome_v<std::remove_cvref_t<T>>
+  && requires {
+       typename std::remove_cvref_t<T>::result_type;
+       typename std::remove_cvref_t<T>::error_type;
+       { std::remove_cvref_t<T>::error(
+           std::declval<typename std::remove_cvref_t<T>::error_type>()) }
+         -> std::same_as<std::remove_cvref_t<T>>;
+       { std::remove_cvref_t<T>::fault() }
+         -> std::same_as<std::remove_cvref_t<T>>;
+     };
 ```
 
 ## State Machines

@@ -178,3 +178,35 @@ done
 The same pattern applies to non-filesystem pollution: an open socket, a
 process-wide singleton, an entry in a shared registry. Replace the `-e`
 check with whatever query inspects the relevant state.
+
+## Bisecting flaky tests with randomized order
+
+Order-dependent flakes come from a test that leaks state into a test
+that follows it; the failure only reproduces when the two run in a
+specific order. Catch2's `--shuffle --rng-seed <seed>` is the canonical
+reproduction handle: randomize the order, record the seed that fails,
+and replay with the same seed to bisect down to the pair. For timing
+flakes the predicate-wait pattern in
+`../cpp-testing-principles/condition-based-waiting.md` removes the
+larger source of intermittency.
+
+## Reusing the mock clock in a debug harness
+
+The same swappable clock service that tests install through the
+cross-cutting variant pattern can be installed at application startup
+through configuration and driven from a debug harness. Reusing the seam
+lets a timing bug be replayed deterministically against the real binary
+-- the same threads, the same callbacks -- not just against the test
+runner. See `../cpp-design-principles/cross-cutting.md` for the
+variant-backed clock that supports this.
+
+## Low-perturbation observability
+
+Under load, detailed logging changes timing and hides the defect: a
+hot-path trace call that fires per message can convert a race condition
+into a deterministic-looking failure or mask one entirely. Sampled
+counters or type-erased event streams, drained off the hot path by a
+separate publisher, are the debugging primitive for load-sensitive bugs.
+The cross-cutting service shape in
+`../cpp-design-principles/cross-cutting.md` covers the seam these
+counters install through.

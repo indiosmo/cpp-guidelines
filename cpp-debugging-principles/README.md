@@ -140,6 +140,8 @@ fault. In that case:
 |------------------------------|--------|
 | `root-cause-tracing.md`      | Tracing a bug backward through the call stack to its root cause, including stack-trace instrumentation and test-pollution bisection. |
 | `defense-in-depth.md`        | Adding validation at every layer the data passes through, so the same bug class becomes structurally impossible to reintroduce. |
+| `logging.md`                 | Severity family, compile-time level cutoff, throttled hot-path variants, domain-type formatters, variant-backed logger backends. |
+| `sanitizers.md`              | Per-sanitizer build presets, version-controlled suppression files, triage-before-suppress discipline, ThreadSanitizer policy. |
 
 When investigating flaky tests, the predicate-based wait pattern in
 `../cpp-testing-principles/condition-based-waiting.md` removes the most

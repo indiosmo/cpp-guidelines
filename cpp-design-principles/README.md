@@ -49,6 +49,7 @@ suite. This guide uses two design-specific helpers often:
 | `declarative-style.md`            | Decompose, work on simpler types, stage variables upfront, named predicates, ranges, lazy composition.  |
 | `functional-programming.md`       | Pure functions and value semantics, sum-type matching with `lib::match`, higher-order functions, type-erased callables, capture lifetimes. |
 | `templates.md`                    | Concepts for template constraints; inline `requires` for compile-time dispatch on capability.           |
+| `preprocessor-macros.md`          | Boost.PP sub-header discipline, indirect three-token paste for unique temporaries, variadic dispatch via `__VA_OPT__`. |
 | `error-handling.md`               | Result types, per-domain error codes, exceptions at boundaries, diagnostic context.                     |
 | `invariants.md`                   | Exception safety, transactions, rollback with scope guards, idempotency for retried operations.         |
 | `state-machines.md`               | When to model logic as an FSM, Boost.SML with embedded PlantUML, isolated transition tests.             |

@@ -42,6 +42,80 @@ concept timestamped_event = serializable<T> && requires(const T& t) {
 
 A concept is the single definition of what `serializable` means.
 
+## Constrain templates intended for a specific shape
+
+A bare `typename T` advertises "any type." When the body assumes the
+parameter has nested types, static factory members, or other shape, the
+contract lives in the body, not the signature. Misuse compiles into a
+deep substitution failure; a readable diagnostic at the call site
+requires a concept.
+
+```cpp
+// BAD - the body uses Outcome::result_type, Outcome::error_type,
+//       Outcome::error(...) and Outcome::fault(); none of that contract
+//       is visible in the signature.
+template <typename Outcome, lib::Tuple... Handlers>
+auto make_error_handlers(const request& req, Handlers&&... handlers);
+```
+
+```cpp
+// GOOD - the concept names the contract once; misuse fails at the call site.
+template <lib::Outcome Outcome, lib::Tuple... Handlers>
+auto make_error_handlers(const request& req, Handlers&&... handlers);
+```
+
+Constraining the parameter does not change the call site. A caller that
+writes `make_error_handlers<outcome>(req)` and lets the rest deduce
+still works; the concept only adds a check the compiler runs at
+instantiation. The ergonomic deduction surface and the contract are not
+in tension -- one is the call shape, the other is the type predicate.
+
+When the parameter must be a specific class-template specialisation --
+"any `outcome<R, E>`," not an arbitrary type that happens to expose the
+right members -- pair the concept with a small `is_X` / `is_X_v` traits
+set and combine both checks.
+
+```cpp
+namespace detail {
+
+template <typename T>
+struct is_outcome : std::false_type {};
+
+template <typename Result, typename Error>
+struct is_outcome<outcome<Result, Error>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_outcome_v = is_outcome<T>::value;
+
+} // namespace detail
+
+template <typename T>
+concept Outcome =
+  detail::is_outcome_v<std::remove_cvref_t<T>>
+  && requires {
+       typename std::remove_cvref_t<T>::result_type;
+       typename std::remove_cvref_t<T>::error_type;
+       { std::remove_cvref_t<T>::error(
+           std::declval<typename std::remove_cvref_t<T>::error_type>()) }
+         -> std::same_as<std::remove_cvref_t<T>>;
+       { std::remove_cvref_t<T>::fault() }
+         -> std::same_as<std::remove_cvref_t<T>>;
+     };
+```
+
+The `is_outcome_v` half rejects an unrelated type that happens to expose
+the same members. The `requires` half rejects an outcome whose surface
+has drifted. Together they keep the contract narrow without giving up
+the deduction-friendly call site.
+
+The rule generalises: reach for `typename T` only when the template is
+genuinely generic. As soon as the body needs `T::value_type`,
+`T::operator->`, `T::error(...)`, or any other shape-specific token,
+hoist the assumption into a concept (and a trait, if the shape is "a
+specialisation of some class template"). Worst case the concept names
+exactly the operations the body already uses; the diagnostic stops
+being a five-screen substitution failure.
+
 ## Compile-time dispatch with inline `requires`
 
 Inside a generic function, `if constexpr (requires { ... })` lets the
