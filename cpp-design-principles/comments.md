@@ -51,6 +51,24 @@ The comment is useful because the line is doing more than "erase": it ties a
 domain event (a maker fully filled) to an ownership action (returning a pooled
 node).
 
+Iterator invalidation rules are another common source of non-obvious lines. When
+correctness depends on a container's invalidation guarantee, state the guarantee
+so a reviewer can verify the pattern against the standard.
+
+```cpp
+// safe to erase by value: unordered_set::erase invalidates only iterators to
+// the erased element; orderIdIt already points past it ([unord.req.general]/14).
+std::string orderId = *orderIdIt;
+++orderIdIt;
+// ...
+book.removeOrder(orderId, order);
+```
+
+Without the comment, a reader must recall whether `std::unordered_set::erase`
+invalidates all iterators (as rehash would) or only the erased one. The standard
+guarantee is load-bearing here: if the container were a `std::vector`, the same
+loop would be undefined behavior.
+
 Do not comment one-line idioms that are already part of the local language.
 For example, `lib::match` or `mil::match` dispatch often looks syntactically
 busy, but in these codebases it is a repeatable convention. A simple dispatcher
