@@ -11,11 +11,14 @@ Prefer declarative code over imperative loops. Concretely, this means:
    dependencies on fields it never touches.
 3. **Stage variables upfront.** Compute derived data before the logic that
    uses it. This separates "what we know" from "what we check".
-4. **Use named predicates.** Replace inline conditions with descriptive
+4. **Bind at the decision point.** For simple optional-like or
+   iterator-like values, bind in the `if` initializer and put the success
+   path in the body.
+5. **Use named predicates.** Replace inline conditions with descriptive
    lambdas or functions.
-5. **Use ranges and algorithms.** Prefer `std::ranges` and `std::views` over
+6. **Use ranges and algorithms.** Prefer `std::ranges` and `std::views` over
    manual index loops.
-6. **Compose lazily; materialize once.** Build the pipeline as a view, then
+7. **Compose lazily; materialize once.** Build the pipeline as a view, then
    either iterate it or convert to a container at the end. One traversal,
    no intermediate vectors.
 
@@ -293,6 +296,68 @@ return applyVelocities(s3, velocities);
 The bad version reuses one name for several distinct values; the reader
 has to track what `shapes` means at each line. The good version gives
 each intermediate its own identifier.
+
+## Bind at the decision point
+
+When a value only exists to drive a nearby branch, bind it in the
+`if` initializer and put the useful path in the body. Avoid assigning a
+temporary, checking the negative case, then continuing or returning
+before the only use of the value.
+
+**Optional value in a loop.** The value matters only when it exists; the
+loop body should say that directly.
+
+```cpp
+// BAD - assign, guard, then use
+for (const auto& fill : fills) {
+  const auto resting_order = order_book.find_resting(fill.order_id);
+  if (!resting_order) {
+    continue;
+  }
+
+  apply_fill(*resting_order, fill);
+}
+```
+
+```cpp
+// GOOD - bind where the branch decides
+for (const auto& fill : fills) {
+  if (const auto resting_order = order_book.find_resting(fill.order_id);
+      resting_order) {
+    apply_fill(*resting_order, fill);
+  }
+}
+```
+
+The good version keeps the success value next to the condition that
+proves it is usable. The loop no longer spends its first lines describing
+the absent-value case.
+
+**Lookup and use.** The same shape applies when the miss returns early.
+
+```cpp
+// BAD - assign, guard, then use
+const auto order_it = orders.find(order_id);
+if (order_it == orders.end()) {
+  return std::nullopt;
+}
+
+return order_it->second.price;
+```
+
+```cpp
+// GOOD - bind where the branch decides
+if (const auto order_it = orders.find(order_id); order_it != orders.end()) {
+  return order_it->second.price;
+}
+
+return std::nullopt;
+```
+
+Keep the guard-clause form when the negative path is the main point of
+the code, when the success value feeds several later phases, or when the
+branch body would grow large. The initializer form is for simple
+"if present, do the thing" cases.
 
 ## Named predicates
 

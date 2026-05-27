@@ -679,6 +679,30 @@ if (order.remaining_quantity > 0 && !(order.limit_price == 0)) {
 }
 ```
 
+Good -- bind an optional value where the branch proves it is usable:
+
+```cpp
+for (const auto& fill : fills) {
+  if (const auto resting_order = order_book.find_resting(fill.order_id);
+      resting_order) {
+    apply_fill(*resting_order, fill);
+  }
+}
+```
+
+Bad -- assign, guard, then use:
+
+```cpp
+for (const auto& fill : fills) {
+  const auto resting_order = order_book.find_resting(fill.order_id);
+  if (!resting_order) {
+    continue;
+  }
+
+  apply_fill(*resting_order, fill);
+}
+```
+
 ## Variants, Concepts, And Templates
 
 `lib::match` for variant dispatch. Good:

@@ -294,6 +294,10 @@ rollback do not recompute from drifted state.
 Decompose, work on simpler inputs, stage derived values upfront, name
 predicates, and use algorithms, ranges, and variant matching. The
 success path reads as a sequence of domain steps, not as plumbing.
+For simple optional or iterator-like values used only by a nearby
+branch, bind in the `if` initializer and put the useful path in the
+body instead of assigning, checking the negative case, and immediately
+continuing or returning.
 
 ## Variants, Concepts, And Templates
 
