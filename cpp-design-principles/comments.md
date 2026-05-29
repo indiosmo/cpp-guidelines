@@ -119,6 +119,14 @@ Block comments are especially valuable in long functions that are already
 structured as phases. If the comment names a phase but the block contains
 several unrelated tasks, split the block or extract a helper.
 
+Use blank lines where they make the phases of a function easier to scan. They
+are usually helpful between setup and a loop, after a multi-line control block
+before the next independent statement, between non-trivial `switch` case groups,
+and before a final `return` that follows a loop or branch. Keep tightly coupled
+statements adjacent: assign-and-test pairs, a lookup and the `if` that checks
+it, and guard bodies with a log and early `return`. Small helpers that set or
+mutate one value and return it can stay compact.
+
 ## What not to comment
 
 Do not narrate obvious code.

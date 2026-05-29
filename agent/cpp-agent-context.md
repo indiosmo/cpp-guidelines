@@ -379,11 +379,14 @@ faster to read when preceded by one sentence naming the step.
 Consecutive block comments should read like the function's table of
 contents.
 
-Use blank lines to separate phases in function bodies: after setup
-before a loop, after a multi-line control block before the next
-statement, and between non-trivial `switch` case groups. Compact
-one-line `case` arms can stay adjacent when the layout is easier to
-scan.
+Use blank lines where they make the phases of a function easier to
+scan. They are usually helpful between setup and a loop, after a
+multi-line control block before the next independent statement,
+between non-trivial `switch` case groups, and before a final `return`
+that follows a loop or branch. Keep tightly coupled statements
+adjacent: assign-and-test pairs, a lookup and the `if` that checks it,
+and guard bodies with a log and early `return`. Small helpers that set
+or mutate one value and return it can stay compact.
 
 Comment non-obvious single lines: dense punctuation, designated
 initializers across domains, chained calls, iterator invalidation,

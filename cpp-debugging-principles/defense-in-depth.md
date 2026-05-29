@@ -94,9 +94,11 @@ auto order_service::place_order(order const& o, account const& a)
   if (a.balance < o.notional()) {
     return std::unexpected{error_code::insufficient_funds};
   }
+
   if (!universe_.contains(o.symbol)) {
     return std::unexpected{error_code::unknown_symbol};
   }
+
   return {};
 }
 ```
@@ -125,6 +127,7 @@ auto exchange_gateway::send_to_exchange(order const& o)
     log_info("dry run: would send order {}", o.id);
     return {};
   }
+
   return transport_.send(o);
 }
 ```
