@@ -379,6 +379,12 @@ faster to read when preceded by one sentence naming the step.
 Consecutive block comments should read like the function's table of
 contents.
 
+Use blank lines to separate phases in function bodies: after setup
+before a loop, after a multi-line control block before the next
+statement, and between non-trivial `switch` case groups. Compact
+one-line `case` arms can stay adjacent when the layout is easier to
+scan.
+
 Comment non-obvious single lines: dense punctuation, designated
 initializers across domains, chained calls, iterator invalidation,
 lifetime contracts, performance-sensitive ordering, and protocol

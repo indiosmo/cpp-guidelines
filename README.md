@@ -66,10 +66,11 @@ identifiers, and prose uses US English. Catch2 includes use angle brackets.
 
 Use blank lines to separate phases inside C++ examples. Put a blank line
 between setup and a loop, between a multi-line control block and the next
-statement, and before a final `return` that follows a loop or branch. Keep
-tightly coupled guard code together: a lookup and the `if` that checks it do
-not need a blank line between them, and a guard body can keep its log and
-early `return` together.
+statement, between non-trivial `switch` case groups, and before a final
+`return` that follows a loop or branch. Compact one-line `case` arms can stay
+adjacent when the layout is easier to scan. Keep tightly coupled guard code
+together: a lookup and the `if` that checks it do not need a blank line between
+them, and a guard body can keep its log and early `return` together.
 
 Throughout these guides, `lib::` is a placeholder namespace for small in-house
 utilities. Substitute the namespace your codebase uses. The examples rely on a
